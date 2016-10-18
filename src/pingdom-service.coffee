@@ -36,6 +36,7 @@ class PingdomService
     @_request { method: 'GET', uri: '/checks' }, (error, body) =>
       return callback error if error?
       { checks } = body
+      debug 'found checks', _.size(checks)
       check = _.find checks, { hostname }
       debug 'found check', check
       callback null, check
@@ -48,7 +49,6 @@ class PingdomService
       form: body ? true
       headers: {
         'App-Key': @appKey
-        'Accept': 'application/json'
       }
       auth: {
         @username
@@ -60,6 +60,6 @@ class PingdomService
       debug 'pingdom response', { error, statusCode: response?.statusCode }
       return callback error if error?
       return callback new Error('Invalid response') if response.statusCode > 499
-      callback null, body
+      callback null, JSON.parse body
 
 module.exports = PingdomService

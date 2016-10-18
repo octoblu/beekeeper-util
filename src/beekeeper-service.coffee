@@ -10,10 +10,10 @@ class BeekeeperService
       slashes: true,
     }
 
-  getLatest: ({ owner, repo }, callback) =>
+  getLatest: ({ owner, repo, tag }, callback) =>
     options =
       baseUrl: @beekeeperUri
-      uri: "/deployments/#{owner}/#{repo}/latest"
+      uri: "/deployments/#{owner}/#{repo}/#{tag}"
       json: true
     debug 'get latest options', options
     request.get options, (error, response, body) =>
