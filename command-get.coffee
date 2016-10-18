@@ -38,6 +38,7 @@ class Command
 
   run: =>
     {repo, owner, tag, json, @watch} = @parseOptions()
+    @start()
     @beekeeperService.getLatest { repo, owner, tag }, (error, deployment) =>
       return @die error if error?
       return @printJSON deployment if json
