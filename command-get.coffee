@@ -38,15 +38,18 @@ class Command
 
   run: =>
     {repo, owner, tag, json, @watch} = @parseOptions()
-    cliClear() if @watch
-    console.log '[refreshed at] ', colors.cyan moment().toString()
     @beekeeperService.getLatest { repo, owner, tag }, (error, deployment) =>
       return @die error if error?
       return @printJSON deployment if json
       return @printNotFound() unless deployment?
-      return @printFailed deployment unless deployment.ci_passing
+      return @printFailed deployment unless deployment.ci_passing == true
       return @printPassing deployment if deployment.ci_passing && deployment.docker_url?
       @printPending deployment
+
+  start: =>
+    return unless @watch
+    cliClear()
+    console.log '[refreshed at] ', colors.cyan moment().toString()
 
   end: (exitCode) =>
     return _.delay @run, 10000 if @watch
