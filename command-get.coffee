@@ -44,10 +44,9 @@ class Command
       return @die error if error?
       return @printJSON deployment if json
       return @printNotFound() unless deployment?
-      return @printPending deployment unless deployment.ci_passing?
-      return @printPassing deployment if deployment.ci_passing
       return @printFailed deployment unless deployment.ci_passing
-      @end 0
+      return @printPassing deployment if deployment.ci_passing && deployment.docker_url?
+      @printPending deployment
 
   end: (exitCode) =>
     return _.delay @run, 10000 if @watch
@@ -59,15 +58,15 @@ class Command
 
   printPassing: ({ created_at, docker_url }) =>
     console.log ''
-    console.log "#{colors.bold('Build')}   ",  colors.green('Passing')
-    console.log "#{colors.bold('Docker')}  ",  colors.underline(docker_url)
+    console.log "#{colors.bold('Build')}   ", colors.green('Passing')
+    console.log "#{colors.bold('Docker')}  ", colors.underline(docker_url)
     console.log "#{colors.bold('Created')} ", @prettyDate(created_at)
     console.log ''
     @end 0
 
   printPending: ({ created_at, updated_at }) =>
     console.log ''
-    console.log "#{colors.bold('Build')}   ", colors.yellow('Pending')
+    console.log "#{colors.bold('Build')}   ", colors.yellow('Pending...')
     console.log "#{colors.bold('Created')} ", @prettyDate(created_at)
     @printComponents updated_at
     console.log ''
