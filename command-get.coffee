@@ -42,8 +42,8 @@ class Command
       return @die error if error?
       return @printJSON deployment if json
       return @printNotFound() unless deployment?
-      return @printFailed deployment unless deployment.ci_passing == true
-      return @printPassing deployment if deployment.ci_passing && deployment.docker_url?
+      return @printFailed deployment if deployment.ci_passing? and not deployment.ci_passing
+      return @printPassing deployment if deployment.ci_passing and deployment.docker_url?
       @printPending deployment
 
   start: =>
