@@ -3,7 +3,8 @@ path = require 'path'
 
 class Config
   constructor: ->
-    @configPath = path.join process.env.HOME, '.octoblu', 'beekeeper.json'
+    @configPath = process.env.BEEKEEPER_CONFIG_PATH
+    @configPath ?= path.join process.env.HOME, '.octoblu', 'beekeeper.json'
     @pkgPath = path.join process.cwd(), 'package.json'
 
   get: =>

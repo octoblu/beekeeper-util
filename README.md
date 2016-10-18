@@ -51,18 +51,24 @@ Configures a check in pingdom.
 beekeeper get
 ```
 
+or use the shortcut
+
+```bash
+bs
+```
+
 Get the latest deployment.
 
 ## Example Configuration
 
 **Location:** `~/.octoblu/beekeeper.json`
 
+*OVERRIDE* you can specify the config path by setting BEEKEEPER_CONFIG_PATH in your env.
+
 ```json
 {
   "beekeeper": {
-    "hostname": "beekeeper.octoblu.com",
-    "username": "...",
-    "password": "..."
+    "hostname": "beekeeper.octoblu.com"
   }
 }
 ```
