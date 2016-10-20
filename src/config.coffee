@@ -16,9 +16,17 @@ class Config
 
     return config
 
+  getName: (name) =>
+    name ?= @getPackageName()
+    return unless name?
+    return _.last(name?.split('/'))
+
   getPackageName: =>
     try
       return require(@pkgPath).name
+
+  getVersion: (version) =>
+    return version ? @getPackageVersion()
 
   getPackageVersion: =>
     try

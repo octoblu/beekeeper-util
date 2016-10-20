@@ -32,8 +32,7 @@ class Command
   parseOptions: =>
     program.parse process.argv
 
-    repo = program.args[0]
-    repo ?= @config.getPackageName()
+    repo = @config.getName(program.args[0])
 
     { owner, quayToken, dockerHubToken } = program
 
