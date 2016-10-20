@@ -8,6 +8,7 @@ class BeekeeperService
       hostname: config['beekeeper'].hostname,
       protocol: 'https',
       slashes: true,
+      auth: config['beekeeper'].auth
     }
 
   getTag: ({ owner, repo, tag }, callback) =>

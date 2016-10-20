@@ -14,6 +14,7 @@ class DockerHubService
       protocol: 'https',
       slashes: true,
       pathname: '/webhooks/docker:hub'
+      auth: config['beekeeper'].auth
     }
     debug 'webhookUrl', @webhookUrl
 
@@ -31,10 +32,12 @@ class DockerHubService
 
   _ensureWebhook: (callback) =>
     return callback null if @hubOnly
-    @_createWebhook (error, webhookId) =>
+    @_createWebhookV2 (error, webhookId) =>
       return callback error if error?
       return callback null unless webhookId?
-      @_createWebhookHook webhookId, callback
+      @_removeV1Webhook (error) =>
+        return callback error if error?
+        @_createWebhookHook webhookId, callback
 
   _createRepository: (callback) =>
     debug 'repository does not exist, but I will make it exist'
@@ -74,23 +77,33 @@ class DockerHubService
         debug 'get registory error', error
         callback error
 
-  _createWebhook: (callback) =>
-    debug 'creating webhook'
-    dockerHubApi.createWebhook @owner, @repo, 'Beekeeper'
+  _removeV1Webhook: (callback) =>
+    console.log colors.magenta('NOTICE'), colors.white('removing the old webhook v1 in docker hub')
+    dockerHubApi.makeDeleteRequest("/repositories/#{@owner}/#{@repo}/webhook_pipeline/beekeeper/")
+      .then =>
+        debug 'v1 beekeeper hook removed'
+        callback null
+      .catch (error) =>
+        debug 'v1 beekeeper hook removal error', error
+        callback error
+
+  _createWebhookV2: (callback) =>
+    debug 'creating webhook v2'
+    dockerHubApi.createWebhook @owner, @repo, 'Beekeeper v2'
       .then (webhook) =>
-        debug 'create webhook response', webhook
+        debug 'create webhook v2 response', webhook
         if webhook?.name[0].indexOf('already exists') > -1
-          debug 'webhook already exists'
+          debug 'webhook v2 already exists'
           return callback null
         callback null, webhook.id
       .catch (error) =>
-        debug 'create webhook failed', error
+        debug 'create webhook v2 failed', error
         return callback null, false if error.message == 'Object not found'
         callback error
 
   _createWebhookHook: (webhookId, callback) =>
-    debug 'creating webhook hook'
-    console.log colors.magenta('NOTICE'), colors.white('creating the webhook docker build')
+    debug 'creating webhook v2 hook'
+    console.log colors.magenta('NOTICE'), colors.white('creating the webhook v2 in docker hub')
     dockerHubApi.createWebhookHook @owner, @repo, webhookId, @webhookUrl
       .then (hook) =>
         debug 'created webhook hook', hook

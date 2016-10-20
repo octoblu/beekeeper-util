@@ -14,6 +14,14 @@ class Config
       console.error "Missing beekeeper in #{@configPath}. Are your dotfiles up to date?"
       process.exit 1
 
+    unless _.get(config, 'beekeeper.hostname')?
+      console.error "Missing beekeeper.hostname in #{@configPath}. Are your dotfiles up to date?"
+      process.exit 1
+
+    unless _.get(config, 'beekeeper.auth')?
+      console.error "Missing beekeeper.auth in #{@configPath}. Are your dotfiles up to date?"
+      process.exit 1
+
     return config
 
   getName: (name) =>
