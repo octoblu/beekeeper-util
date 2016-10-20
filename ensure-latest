@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# bash <(curl -s https://bit.ly/beekeeper-ensure-latest)
+# bash <(curl -sSL https://bit.ly/beekeeper-ensure-latest)
 
 dry_run() {
   echo "$@"
