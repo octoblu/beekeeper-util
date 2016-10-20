@@ -6,7 +6,7 @@ program
   .version packageJSON.version
   .command 'configure', 'configure a project to work with beekeeper'
   .command 'get', 'get the current deployment'
-  .command 'hub', 'configure a project to use docker hub (no beekeeper webhooks)'
+  .command 'hub', 'configure a project to use docker hub'
   .command 'pingdom', 'configure a project to use pingdom'
 
 class Command

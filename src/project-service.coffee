@@ -7,9 +7,8 @@ fs     = require 'fs'
 debug  = require('debug')('beekeeper-util:project-service')
 
 class ProjectService
-  constructor: ({ config, @hubOnly }) ->
+  constructor: ({ config }) ->
     throw new Error 'Missing config argument' unless config?
-    @hubOnly ?= false
     @travisYml = path.join process.cwd(), '.travis.yml'
     @packagePath = path.join process.cwd(), 'package.json'
     @dockerFilePath = path.join process.cwd(), 'Dockerfile'
@@ -67,7 +66,7 @@ class ProjectService
       orgData = _.cloneDeep data
       type = 'pro' if isPrivate
       type ?= 'org'
-      _.set data, 'notifications.webhooks', [@webhookUrl] unless @hubOnly
+      _.set data, 'notifications.webhooks', [@webhookUrl]
       data.after_success ?= []
       after_success = [
         'npm run coverage'

@@ -6,7 +6,6 @@ debug         = require('debug')('beekeeper-util:command-hub')
 
 Config           = require './src/config.coffee'
 DockerHubService = require './src/docker-hub-service.coffee'
-ProjectService    = require './src/project-service.coffee'
 
 packageJSON   = require './package.json'
 
@@ -15,22 +14,22 @@ program
   .usage '[options] <project-name>'
   .option '-o, --owner <octoblu>', 'Project owner'
   .option '-p, --private', 'Add this flag if the project is private'
+  .option '-n, --no-webhook', 'No webhook to beekeeper'
   .option '--docker-hub-token <docker-hub-token>', 'Docker Hub login token. (env: DOCKER_HUB_LOGIN_TOKEN)'
 
 class Command
   constructor: ->
     process.on 'uncaughtException', @die
     @config = new Config()
-    { @repo, @owner, @isPrivate, dockerHubToken } = @parseOptions()
-    @projectService = new ProjectService { config: @config.get(), hubOnly: true }
-    @dockerHubService = new DockerHubService { config: @config.get(), dockerHubToken, hubOnly: true }
+    { @repo, @owner, @isPrivate, dockerHubToken, @noWebhook } = @parseOptions()
+    @dockerHubService = new DockerHubService { config: @config.get(), dockerHubToken }
 
   parseOptions: =>
     program.parse process.argv
 
     repo = @config.getName(program.args[0])
 
-    { owner, dockerHubToken } = program
+    { owner, dockerHubToken, noWebhook } = program
 
     owner ?= 'octoblu'
     dockerHubToken ?= process.env.DOCKER_HUB_LOGIN_TOKEN
@@ -39,15 +38,13 @@ class Command
 
     isPrivate = program.private?
 
-    return { repo, owner, isPrivate, dockerHubToken }
+    return { repo, owner, isPrivate, dockerHubToken, noWebhook: noWebhook? }
 
   run: =>
-    @projectService.configure { @isPrivate }, (error) =>
+    @dockerHubService.configure { @repo, @owner, @isPrivate, @noWebhook }, (error) =>
       return @die error if error?
-      @dockerHubService.configure { @repo, @owner, @isPrivate }, (error) =>
-        return @die error if error?
-        console.log colors.green('SUCCESS'), colors.white('it has been done. Gump it when ready.')
-        process.exit 0
+      console.log colors.green('SUCCESS'), colors.white('it has been done.')
+      process.exit 0
 
   dieHelp: (error) =>
     program.outputHelp()

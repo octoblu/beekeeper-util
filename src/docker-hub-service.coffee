@@ -4,10 +4,9 @@ colors       = require 'colors'
 debug        = require('debug')('beekeeper-util:docker-hub-service')
 
 class DockerHubService
-  constructor: ({ config, dockerHubToken, @hubOnly }) ->
+  constructor: ({ config, dockerHubToken }) ->
     throw new Error 'Missing config argument' unless config?
     throw new Error 'Missing dockerHubToken argument' unless dockerHubToken?
-    @hubOnly ?= false
     dockerHubApi.setLoginToken(dockerHubToken)
     @webhookUrl = url.format {
       hostname: config['beekeeper'].hostname,
@@ -18,8 +17,8 @@ class DockerHubService
     }
     debug 'webhookUrl', @webhookUrl
 
-  configure: ({ @repo, @owner, @isPrivate }, callback) =>
-    debug 'setting up docker', { @repo, @owner, @isPrivate }
+  configure: ({ @repo, @owner, @isPrivate, @noWebhook }, callback) =>
+    debug 'setting up docker', { @repo, @owner, @isPrivate, @noWebhook }
     @_ensureRepository (error) =>
       return callback error if error?
       @_ensureWebhook callback
@@ -31,7 +30,7 @@ class DockerHubService
       @_createRepository callback
 
   _ensureWebhook: (callback) =>
-    return callback null if @hubOnly
+    return callback null if @noWebhook
     @_createWebhookV2 (error, webhookId) =>
       return callback error if error?
       return callback null unless webhookId?
@@ -78,9 +77,9 @@ class DockerHubService
         callback error
 
   _removeV1Webhook: (callback) =>
-    console.log colors.magenta('NOTICE'), colors.white('removing the old webhook v1 in docker hub')
     dockerHubApi.makeDeleteRequest("/repositories/#{@owner}/#{@repo}/webhook_pipeline/beekeeper/")
       .then =>
+        console.log colors.magenta('NOTICE'), colors.white('removed the old webhook v1 in docker hub')
         debug 'v1 beekeeper hook removed'
         callback null
       .catch (error) =>

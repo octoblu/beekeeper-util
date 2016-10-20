@@ -1,6 +1,6 @@
 {
   "name": "beekeeper-util",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "description": "CLI utility for managing the beekeeper-service",
   "keywords": [
     "beekeeper"
