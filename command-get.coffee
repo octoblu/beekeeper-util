@@ -28,6 +28,8 @@ class Command
     program.parse process.argv
     repo = @config.getName(program.args[0])
 
+    throw new Error '"get" is not a valid project name' if repo == 'get'
+
     { owner, json, tag, watch, latest, exit } = program
     owner ?= 'octoblu'
     tag = @config.getVersion(tag)
