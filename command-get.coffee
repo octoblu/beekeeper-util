@@ -56,8 +56,8 @@ class Command
     cliClear()
     console.log '[refreshed at] ', colors.cyan moment().toString()
 
-  end: (exitCode) =>
-    return process.exit(0) if @exit && exitCode == 0
+  end: (exitCode, passing) =>
+    return process.exit(0) if @exit && passing
     return _.delay @run, 10000 if @watch
     process.exit exitCode
 
@@ -75,7 +75,7 @@ class Command
     console.log "#{colors.bold('Docker')}  ", colors.underline(docker_url)
     console.log "#{colors.bold('Created')} ", @prettyDate(created_at)
     console.log ''
-    @end 0
+    @end 0, true
 
   printPending: ({ ci_passing, docker_url, created_at, updated_at }) =>
     waitlist = []
@@ -87,7 +87,7 @@ class Command
     console.log "#{colors.bold('Created')}   ", @prettyDate(created_at)
     @printComponents updated_at
     console.log ''
-    @end 0
+    @end 0, false
 
   printFailed: ({ created_at, updated_at }) =>
     console.log ''
@@ -95,13 +95,13 @@ class Command
     console.log "#{colors.bold('Created')} ", @prettyDate(created_at)
     @printComponents updated_at
     console.log ''
-    @end 1
+    @end 1, false
 
   printNotFound: =>
     console.log ''
     console.log "#{colors.bold('Build')} ", colors.yellow.underline('Not found!')
     console.log ''
-    @end 1
+    @end 1, false
 
   printComponents: (components) =>
     return console.log("#{colors.bold('No passing components')}") if _.isEmpty components
