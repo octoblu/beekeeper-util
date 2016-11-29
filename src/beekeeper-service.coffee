@@ -26,4 +26,16 @@ class BeekeeperService
         return callback null
       callback null, body
 
+  delete: ({ owner, repo, tag }, callback) =>
+    options =
+      baseUrl: @beekeeperUri
+      uri: "/deployments/#{owner}/#{repo}/#{tag}"
+      json: true
+    debug 'delete options', options
+    request.delete options, (error, response, body) =>
+      return callback error if error?
+      if response.statusCode > 499
+        return callback new Error 'Fatal error from beekeeper service'
+      callback()
+
 module.exports = BeekeeperService
