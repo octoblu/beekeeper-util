@@ -17,6 +17,8 @@ class BeekeeperService
       return callback null, deployment, deployment if tag == 'latest'
       @_getTag { owner, repo, tag: 'latest' }, (error, latest) =>
         return callback error if error?
+        if deployment?.tag == latest?.tag
+          return callback null, latest, latest
         callback null, deployment, latest
 
   _getTag: ({ owner, repo, tag }, callback) =>
