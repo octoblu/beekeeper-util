@@ -12,13 +12,21 @@ class BeekeeperService
     }
 
   getTag: ({ owner, repo, tag }, callback) =>
+    @_getTag { owner, repo, tag }, (error, deployment) =>
+      return callback error if error?
+      return callback null, deployment, deployment if tag == 'latest'
+      @_getTag { owner, repo, tag: 'latest' }, (error, latest) =>
+        return callback error if error?
+        callback null, deployment, latest
+
+  _getTag: ({ owner, repo, tag }, callback) =>
     options =
       baseUrl: @beekeeperUri
       uri: "/deployments/#{owner}/#{repo}/#{tag}"
       json: true
-    debug 'get latest options', options
+    debug 'get tag options', options
     request.get options, (error, response, body) =>
-      debug 'got latest', { body, error }
+      debug 'got tag', { body, error }
       return callback error if error?
       if response.statusCode > 499
         return callback new Error 'Fatal error from beekeeper service'

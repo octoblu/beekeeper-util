@@ -43,14 +43,16 @@ class Command
   run: =>
     {repo, owner, tag, json, @watch, @exit } = @parseOptions()
     @start()
-    @beekeeperService.getTag { repo, owner, tag }, (error, deployment) =>
+    @beekeeperService.getTag { repo, owner, tag }, (error, deployment, latest) =>
       return @die error if error?
       return @printJSON deployment if json
       @printHeader "#{owner}/#{repo}:#{tag}" unless deployment?
       return @printNotFound() unless deployment?
-      @printHeader "#{deployment.owner_name}/#{deployment.repo_name}:#{deployment.tag}" if deployment?
-      return @printFailed deployment if deployment.ci_passing? and not deployment.ci_passing
-      return @printPassing deployment if deployment.ci_passing and deployment.docker_url?
+      @printDeployHeader { latest, deployment }
+      if deployment.ci_passing? and not deployment.ci_passing
+        return @printFailed deployment, 'CI failed'
+      if deployment.ci_passing and deployment.docker_url?
+        return @printPassing deployment, 'CI passed but no docker build'
       @printPending deployment
 
   start: =>
@@ -70,6 +72,17 @@ class Command
   printHeader: (slug) =>
     console.log ''
     console.log "#{colors.cyan('Deployment:')}", slug
+
+  printDeployHeader: ({ latest, deployment }) =>
+    return unless deployment?
+    latestSlug = "#{latest.owner_name}/#{latest.repo_name}:#{latest.tag}"
+    deploymentSlug = "#{deployment.owner_name}/#{deployment.repo_name}:#{deployment.tag}"
+    console.log ''
+    if deployment.tag == latest.tag
+      console.log "#{colors.cyan('Running:')}", deploymentSlug
+      return
+    console.log "#{colors.cyan('Running:')}", latestSlug
+    console.log colors.bold("#{colors.cyan('Desired:')}"), colors.bold(deploymentSlug)
 
   printPassing: ({ created_at, docker_url }) =>
     console.log ''
@@ -91,10 +104,12 @@ class Command
     console.log ''
     @end 0, false
 
-  printFailed: ({ created_at, updated_at }) =>
+  printFailed: ({ created_at, updated_at }, reason) =>
     console.log ''
     console.log "#{colors.bold('Build')}   ", colors.red('Failed')
     console.log "#{colors.bold('Created')} ", @prettyDate(created_at)
+    console.log "#{colors.bold('Reason')}  ", "'#{reason}'"
+    console.log ''
     @printComponents updated_at
     console.log ''
     @end 1, false
@@ -106,8 +121,8 @@ class Command
     @end 1, false
 
   printComponents: (components) =>
-    return console.log("#{colors.bold('No passing components')}") if _.isEmpty components
-    console.log "#{colors.bold('Passing Components')} "
+    return console.log("#{colors.bold('No completed components')}") if _.isEmpty components
+    console.log "#{colors.bold('Completed Components')} "
     _.each components, (date, key) =>
       console.log "  #{colors.cyan(key)} ", @prettyDate(date)
 
