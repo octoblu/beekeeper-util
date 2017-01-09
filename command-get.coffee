@@ -75,14 +75,19 @@ class Command
 
   printDeployHeader: ({ latest, deployment }) =>
     return unless deployment?
-    latestSlug = "#{latest.owner_name}/#{latest.repo_name}:#{latest.tag}"
+    latestSlug = "#{latest.owner_name}/#{latest.repo_name}:#{latest.tag}" if latest?
     deploymentSlug = "#{deployment.owner_name}/#{deployment.repo_name}:#{deployment.tag}"
     console.log ''
-    if deployment.tag == latest.tag
+    unless latest?
+      console.log "#{colors.cyan('There is no latest version, maybe it has never been deployed?')}"
+      console.log colors.bold("#{colors.cyan('Desired:')}"), colors.bold(deploymentSlug)
+      return
+    else if deployment.tag == latest.tag
       console.log "#{colors.cyan('Running:')}", deploymentSlug
       return
-    console.log "#{colors.cyan('Running:')}", latestSlug
-    console.log colors.bold("#{colors.cyan('Desired:')}"), colors.bold(deploymentSlug)
+    else
+      console.log "#{colors.cyan('Running:')}", latestSlug
+      console.log colors.bold("#{colors.cyan('Desired:')}"), colors.bold(deploymentSlug)
 
   printPassing: ({ created_at, docker_url }) =>
     console.log ''
