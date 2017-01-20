@@ -1,3 +1,4 @@
+_       = require 'lodash'
 url     = require 'url'
 request = require 'request'
 debug   = require('debug')('beekeeper-util:service')
@@ -48,4 +49,16 @@ class BeekeeperService
         return callback new Error 'Fatal error from beekeeper service'
       callback()
 
+  update: ({ owner, repo, tag, docker_url }, callback) =>
+    options =
+      baseUrl: @beekeeperUri
+      uri: "/deployments/#{owner}/#{repo}/#{tag}"
+      json: { docker_url }
+    debug 'update options', options
+    request.patch options, (error, response, body) =>
+      return callback error if error?
+      if response.statusCode > 399
+        message = _.get body, 'error', 'Error from beekeeper service'
+        return callback new Error message
+      callback()
 module.exports = BeekeeperService

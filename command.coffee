@@ -9,6 +9,7 @@ program
   .command 'get', 'get the current deployment'
   .command 'hub', 'configure a project to use docker hub'
   .command 'pingdom', 'configure a project to use pingdom'
+  .command 'update', 'update a deployment'
 
 class Command
   constructor: ->
