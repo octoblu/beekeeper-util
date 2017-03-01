@@ -1,93 +1,46 @@
 _           = require 'lodash'
-colors      = require 'colors'
-program     = require 'commander'
-moment      = require 'moment'
 url         = require 'url'
+colors      = require 'colors'
+moment      = require 'moment'
 path        = require 'path'
 request     = require 'request'
 cliClear    = require 'cli-clear'
 notifier    = require 'node-notifier'
-packageJSON = require './package.json'
 
-Config           = require './src/config'
-BeekeeperService = require './src/beekeeper-service'
+Config           = require './config'
+BeekeeperService = require './beekeeper-service'
 
-program
-  .version packageJSON.version
-  .usage '[options] <project-name>'
-  .option '-t, --tag <tag>', 'Project tag. Defaults to package.version'
-  .option '-l, --latest', 'Override the tag with "latest"'
-  .option '-e, --exit', 'When watching exit 0 when it passes'
-  .option '-o, --owner <octoblu>', 'Project owner'
-  .option '-w, --watch', 'Watch deployment'
-  .option '-n, --notify', 'Notify when passing'
-  .option '-u, --service-url <url>', 'Poll <service-url>/version for the updated version'
-  .option '-j, --json', 'Print JSON'
-
-class Command
-  constructor: ->
-    process.on 'uncaughtException', @die
-    @config = new Config()
-    @beekeeperService = new BeekeeperService { config: @config.get() }
-
-  parseOptions: =>
-    program.parse process.argv
-    repo = @config.getName(program.args[0])
-
-    throw new Error '"get" is not a valid project name' if repo == 'get'
-
-    {
-      owner
-      json
-      tag
-      watch
-      latest
-      exit
-      notify
-      serviceUrl
-    } = program
-    owner ?= 'octoblu'
-    tag = @config.getVersion(tag)
-    tag ?= 'latest'
-    tag = 'latest' if latest?
-
-    @dieHelp new Error 'Missing repo' unless repo?
-
-    if serviceUrl?
-      unless _.includes serviceUrl, 'http'
-        serviceUrl = "https://#{serviceUrl}"
-      urlParts = url.parse serviceUrl, true
-      urlParts.pathname = '/version'
-      urlParts.protocol ?= 'https'
-      urlParts.slashes = true
-      serviceUrl = url.format urlParts
-
-    return {
-      repo
-      owner
-      json: json?
-      tag
-      watch: watch?
-      exit: exit?
-      notify: notify?
-      serviceUrl
-    }
-
-  run: =>
+class StatusService
+  constructor: (options) ->
     {
       @repo
       @owner
       @tag
-      json
+      @json
       @watch
       @exit
       @notify
-      @serviceUrl
-    } = @parseOptions()
+      serviceUrl
+    } = options
+    @serviceUrl = @getServiceUrl serviceUrl
+    @config = new Config()
+    @beekeeperService = new BeekeeperService { config: @config.get() }
+
+  getServiceUrl: (serviceUrl) =>
+    return unless serviceUrl?
+    unless _.includes serviceUrl, 'http'
+      serviceUrl = "https://#{serviceUrl}"
+    urlParts = url.parse serviceUrl, true
+    urlParts.pathname = '/version'
+    urlParts.protocol ?= 'https'
+    urlParts.slashes = true
+    return url.format urlParts
+
+  run: =>
     @start()
     @beekeeperService.getTag { @repo, @owner, @tag }, (error, deployment, latest) =>
       return @die error if error?
-      return @printJSON deployment if json
+      return @printJSON deployment if @json
       @printHeader "#{@owner}/#{@repo}:#{@tag}" unless deployment?
       return @printNotFound() unless deployment?
       @printDeployHeader { latest, deployment }
@@ -115,7 +68,7 @@ class Command
       title: 'Beekeeper'
       subtitle: "#{@repo}:#{@tag}"
       message: 'Service Deployed!'
-      icon: path.join(__dirname, 'assets', 'beekeeper.png')
+      icon: path.join(__dirname, '..', 'assets', 'beekeeper.png')
       sound: true
       open: @serviceUrl
     }
@@ -210,13 +163,9 @@ class Command
   prettyDate: (date) =>
     return "@ #{colors.gray(moment(date).fromNow())}"
 
-  dieHelp: (error) =>
-    program.outputHelp()
-    return @die error
-
   die: (error) =>
     return process.exit(0) unless error?
     console.error error.stack
     process.exit 1
 
-module.exports = Command
+module.exports = StatusService

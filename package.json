@@ -1,6 +1,6 @@
 {
   "name": "beekeeper-util",
-  "version": "3.4.0",
+  "version": "3.5.0",
   "description": "CLI utility for managing the beekeeper-service",
   "keywords": [
     "beekeeper"
@@ -17,9 +17,12 @@
     "beekeeper-get": "./command-get.js",
     "beekeeper-hub": "./command-hub.js",
     "beekeeper-pingdom": "./command-pingdom.js",
+    "beekeeper-status-notify": "./command-status-notify.js",
+    "beekeeper-status": "./command-status.js",
     "beekeeper-update": "./command-update.js",
     "beekeeper": "./command.js",
-    "bs": "./command-get.js"
+    "bsn": "./command-status-notify.js",
+    "bs": "./command-status.js"
   },
   "repository": {
     "type": "git",

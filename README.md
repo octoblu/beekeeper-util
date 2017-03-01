@@ -20,57 +20,8 @@ npm install --global beekeeper-util
 
 ## Commands
 
-### configure
-
 ```bash
-beekeeper configure
-```
-
-Configures a project to work with the beekeeper service.
-
-
-### hub
-
-```bash
-beekeeper hub
-```
-
-Configures a project to work with docker hub. No webhooks are configured.
-
-### project
-
-```bash
-beekeeper project <hostname>
-```
-
-Configures a check in pingdom.
-
-### get
-
-```bash
-beekeeper get
-```
-
-or use the shortcut
-
-```bash
-bs
-```
-
-Get the latest deployment.
-
-## Example Configuration
-
-**Location:** `~/.octoblu/beekeeper.json`
-
-*OVERRIDE* you can specify the config path by setting BEEKEEPER_CONFIG_PATH in your env.
-
-```json
-{
-  "beekeeper": {
-    "hostname": "beekeeper.octoblu.com"
-  }
-}
+beekeeper --help
 ```
 
 ## License
