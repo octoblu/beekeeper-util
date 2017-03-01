@@ -2,7 +2,11 @@ _           = require 'lodash'
 colors      = require 'colors'
 program     = require 'commander'
 moment      = require 'moment'
+url         = require 'url'
+path        = require 'path'
+request     = require 'request'
 cliClear    = require 'cli-clear'
+notifier    = require 'node-notifier'
 packageJSON = require './package.json'
 
 Config           = require './src/config'
@@ -16,6 +20,8 @@ program
   .option '-e, --exit', 'When watching exit 0 when it passes'
   .option '-o, --owner <octoblu>', 'Project owner'
   .option '-w, --watch', 'Watch deployment'
+  .option '-n, --notify', 'Notify when passing'
+  .option '-u, --service-url <url>', 'Poll <service-url>/version for the updated version'
   .option '-j, --json', 'Print JSON'
 
 class Command
@@ -30,7 +36,16 @@ class Command
 
     throw new Error '"get" is not a valid project name' if repo == 'get'
 
-    { owner, json, tag, watch, latest, exit } = program
+    {
+      owner
+      json
+      tag
+      watch
+      latest
+      exit
+      notify
+      serviceUrl
+    } = program
     owner ?= 'octoblu'
     tag = @config.getVersion(tag)
     tag ?= 'latest'
@@ -38,15 +53,42 @@ class Command
 
     @dieHelp new Error 'Missing repo' unless repo?
 
-    return { repo, owner, json: json?, tag, watch: watch?, exit: exit? }
+    if serviceUrl?
+      unless _.includes serviceUrl, 'http'
+        serviceUrl = "https://#{serviceUrl}"
+      urlParts = url.parse serviceUrl, true
+      urlParts.pathname = '/version'
+      urlParts.protocol ?= 'https'
+      urlParts.slashes = true
+      serviceUrl = url.format urlParts
+
+    return {
+      repo
+      owner
+      json: json?
+      tag
+      watch: watch?
+      exit: exit?
+      notify: notify?
+      serviceUrl
+    }
 
   run: =>
-    {repo, owner, tag, json, @watch, @exit } = @parseOptions()
+    {
+      @repo
+      @owner
+      @tag
+      json
+      @watch
+      @exit
+      @notify
+      @serviceUrl
+    } = @parseOptions()
     @start()
-    @beekeeperService.getTag { repo, owner, tag }, (error, deployment, latest) =>
+    @beekeeperService.getTag { @repo, @owner, @tag }, (error, deployment, latest) =>
       return @die error if error?
       return @printJSON deployment if json
-      @printHeader "#{owner}/#{repo}:#{tag}" unless deployment?
+      @printHeader "#{@owner}/#{@repo}:#{@tag}" unless deployment?
       return @printNotFound() unless deployment?
       @printDeployHeader { latest, deployment }
       if deployment.ci_passing? and not deployment.ci_passing
@@ -61,9 +103,36 @@ class Command
     console.log '[refreshed at] ', colors.cyan moment().toString()
 
   end: (exitCode, passing) =>
+    return @waitForVersion() if @serviceUrl? && passing
+    @doNotify()
     return process.exit(0) if @exit && passing
     return _.delay @run, 10000 if @watch
     process.exit exitCode
+
+  doNotify: =>
+    return unless @notify
+    notifier.notify {
+      title: 'Beekeeper'
+      subtitle: "#{@repo}:#{@tag}"
+      message: 'Service Deployed!'
+      icon: path.join(__dirname, 'assets', 'beekeeper.png')
+      sound: true
+      open: @serviceUrl
+    }
+
+  waitForVersion: =>
+    @checkVersion (error, passing) =>
+      return @die error if error?
+      @printVersionResult { passing }
+      return _.delay @waitForVersion, 1000 unless passing
+      @doNotify()
+      process.exit 0
+
+  checkVersion: (callback) =>
+    request.get @serviceUrl, { json: true }, (error, response, body) =>
+      return callback error if error?
+      tag = @tag.replace 'v', ''
+      callback null, body.version == tag
 
   printJSON: (deployment) =>
     console.log JSON.stringify deployment, null, 2
@@ -96,6 +165,13 @@ class Command
     console.log "#{colors.bold('Created')} ", @prettyDate(created_at)
     console.log ''
     @end 0, true
+
+  printVersionResult: ({ passing }) =>
+    if passing
+      console.log "#{colors.cyan("Service is running #{@tag}!")}   "
+    else
+      console.log "#{colors.yellow("Waiting for service to run #{@tag}...")}   "
+    console.log ''
 
   printPending: ({ ci_passing, docker_url, created_at, updated_at }) =>
     waitlist = []
