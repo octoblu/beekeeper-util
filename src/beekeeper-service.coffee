@@ -43,7 +43,7 @@ class BeekeeperService
       uri: "/deployments/#{owner}/#{repo}/#{tag}"
       json: true
     debug 'delete options', options
-    request.delete options, (error, response, body) =>
+    request.delete options, (error, response) =>
       return callback error if error?
       if response.statusCode > 499
         return callback new Error 'Fatal error from beekeeper service'

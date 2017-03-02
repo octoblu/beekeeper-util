@@ -57,7 +57,7 @@ class StatusService
 
   end: (exitCode, passing) =>
     return @waitForVersion() if @serviceUrl? && passing
-    @doNotify()
+    @doNotify() if passing
     return process.exit(0) if @exit && passing
     return _.delay @run, 10000 if @watch
     process.exit exitCode
@@ -121,9 +121,11 @@ class StatusService
 
   printVersionResult: ({ passing }) =>
     if passing
-      console.log "#{colors.cyan("Service is running #{@tag}!")}   "
+      message = "Service is running #{@tag}!"
+      console.log "#{colors.cyan(message)}   "
     else
-      console.log "#{colors.yellow("Waiting for service to run #{@tag}...")}   "
+      message = "Waiting for service to run #{@tag}..."
+      console.log "#{colors.yellow(message)}   "
     console.log ''
 
   printPending: ({ ci_passing, docker_url, created_at, updated_at }) =>
