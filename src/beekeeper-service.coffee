@@ -4,8 +4,8 @@ request = require 'request'
 debug   = require('debug')('beekeeper-util:service')
 
 class BeekeeperService
-  constructor: ({ config }) ->
-    @beekeeperUri = url.format {
+  constructor: ({ config, @beekeeperUri }) ->
+    @beekeeperUri ?= url.format {
       hostname: config['beekeeper'].hostname,
       protocol: 'https',
       slashes: true,
@@ -61,4 +61,19 @@ class BeekeeperService
         message = _.get body, 'error', 'Error from beekeeper service'
         return callback new Error message
       callback()
+
+  webhook: ({ owner, repo, tag, ci_passing, type }, callback) =>
+    options =
+      baseUrl: @beekeeperUri
+      uri: "/webhooks/#{type}/#{owner}/#{repo}"
+      json: { tag, ci_passing }
+    debug 'update options', options
+    request.post options, (error, response, body) =>
+      return callback error if error?
+      if response.statusCode > 399
+        console.log body
+        message = _.get body, 'error', 'Error from beekeeper service'
+        return callback new Error message
+      callback()
+
 module.exports = BeekeeperService

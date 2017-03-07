@@ -11,6 +11,7 @@ program
   .command 'status-notify', 'get the status of a current deployment and notify when done'
   .command 'status', 'get the status of a current deployment'
   .command 'update', 'update a deployment'
+  .command 'webhook', 'trigger webhook deployment'
 
 class Command
   constructor: ->

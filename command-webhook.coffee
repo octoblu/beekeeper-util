@@ -1,4 +1,3 @@
-colors      = require 'colors'
 program     = require 'commander'
 packageJSON = require './package.json'
 
@@ -8,7 +7,8 @@ BeekeeperService = require './src/beekeeper-service'
 program
   .version packageJSON.version
   .usage '[options] <project-name>'
-  .option '-d, --docker-url <docker-url>', '(required) Docker URL to update'
+  .option '--type <type>', '(required) webhook type'
+  .option '-c, --ci-passing <bool>', 'CI is passing. Defaults to false'
   .option '-t, --tag <tag>', 'Project tag. Defaults to package.version'
   .option '-o, --owner <octoblu>', 'Project owner'
 
@@ -16,25 +16,26 @@ class Command
   constructor: ->
     process.on 'uncaughtException', @die
     @config = new Config()
-    @beekeeperService = new BeekeeperService { config: @config.get() }
+    beekeeperUri = process.env.BEEKEEPER_URI
+    return @dieHelp(new Error('Missing env BEEKEEPER_URI')) unless beekeeperUri?
+    @beekeeperService = new BeekeeperService { config: null, beekeeperUri }
 
   parseOptions: =>
     program.parse process.argv
     repo = @config.getName(program.args[0])
 
-    { owner, tag } = program
+    { owner, tag, type } = program
     owner ?= 'octoblu'
     tag = @config.getVersion(tag)
-    docker_url = program.dockerUrl
+    ci_passing = program.ciPassing
 
     @dieHelp new Error 'Missing repo argument' unless repo?
-    @dieHelp new Error 'Missing docker-url argument' unless docker_url?
+    @dieHelp new Error 'Missing type argument' unless type?
 
-    return { repo, owner, tag, docker_url }
+    return { repo, owner, tag, ci_passing, type }
 
   run: =>
-    {repo, owner, tag, docker_url } = @parseOptions()
-    @beekeeperService.update { repo, owner, tag, docker_url }, (error) =>
+    @beekeeperService.webhook @parseOptions(), (error) =>
       return @die error if error?
       process.exit 0
 
