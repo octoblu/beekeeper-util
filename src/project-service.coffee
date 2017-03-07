@@ -12,6 +12,7 @@ class ProjectService
     @travisYml = path.join process.cwd(), '.travis.yml'
     @packagePath = path.join process.cwd(), 'package.json'
     @dockerFilePath = path.join process.cwd(), 'Dockerfile'
+    @dockerignorePath = path.join process.cwd(), '.dockerignore'
     @webhookUrl = url.format {
       hostname: config['beekeeper'].hostname,
       protocol: 'https',
@@ -22,15 +23,20 @@ class ProjectService
   configure: ({ isPrivate }, callback) =>
     @_modifyTravis { isPrivate }, (error) =>
       return callback error if error?
-      @_modifyDockerfile (error) =>
+      @_modifyDockerignore (error) =>
         return callback error if error?
-        @_modifyPackage callback
+        @_modifyDockerfile (error) =>
+          return callback error if error?
+          @_modifyPackage callback
+
+  _getPackage: =>
+    try
+      return _.cloneDeep require @packagePath
+    catch error
+      debug 'package.json require error', error
 
   _modifyPackage: (callback) =>
-    try
-      packageJSON = _.cloneDeep require @packagePath
-    catch error
-      debug 'modify package.json require error', error
+    packageJSON = @_getPackage()
     return callback() unless packageJSON?
     orgPackage = _.cloneDeep packageJSON
     packageJSON.scripts ?= {}
@@ -39,10 +45,10 @@ class ProjectService
     packageJSON.scripts['mocha:json'] ?= 'env NPM_ENV=test mocha --reporter json > coverage/mocha.json'
     packageJSON.scripts['test:watch'] ?= 'mocha -w -R mocha-multi --reporter-options spec=-,mocha-osx-reporter=-'
     packageJSON.devDependencies ?= {}
-    packageJSON.devDependencies['nyc'] ?= '^8.3.0'
+    packageJSON.devDependencies['nyc'] ?= '^10.1.2'
     packageJSON.devDependencies['mocha-osx-reporter'] ?= '^0.1.2'
-    packageJSON.devDependencies['mocha-multi'] ?= '^0.9.1'
-    packageJSON.devDependencies['mocha'] ?= '^2.5.3'
+    packageJSON.devDependencies['mocha-multi'] ?= '^0.10.0'
+    packageJSON.devDependencies['mocha'] ?= '^3.2.0'
     packageJSON.nyc ?= {
       cache: true
       reporter: [
@@ -81,8 +87,27 @@ class ProjectService
       yaml.write @travisYml, data, callback
 
   _modifyDockerfile: (callback) =>
-    console.log colors.magenta('NOTICE'), colors.white('make sure you add a HEALTHCHECK to your Dockerfile')
-    console.log '  ', colors.cyan('Example'), colors.white('`HEALTHCHECK CMD curl --fail http://localhost:80/healthcheck || exit 1`')
-    callback null
+    packageJSON = @_getPackage()
+    return callback null unless packageJSON?
+    fs.readFile @dockerFilePath, (error, contents) =>
+      return callback error if error?
+      contents = contents.toString()
+      if _.some packageJSON.dependencies, 'express' and !_.includes contents, 'HEALTHCHECK'
+        console.log colors.magenta('NOTICE'), colors.white('make sure you add a HEALTHCHECK to your Dockerfile')
+        console.log '  ', colors.cyan('Example'), colors.white('`HEALTHCHECK CMD curl --fail http://localhost:80/healthcheck || exit 1`')
+      unless _.includes contents, 'node:7-apline'
+        console.log colors.yellow('IMPORTANT!!!'), colors.white('Please use node:7-apline in your Dockerfile')
+        console.log '  ', colors.cyan('Example'), colors.white('`FROM node:7-alpine`')
+      callback null
+
+  _modifyDockerignore: (callback) =>
+    fs.readFile @dockerignorePath, (error, contents) =>
+      console.error error if error?
+      return callback null if error?
+      contents = contents.toString()
+      newContents = contents.replace('test\n', '')
+      return callback null if contents == newContents
+      console.log colors.magenta('NOTICE'), colors.white('modifying .dockerignore')
+      fs.writeFile @dockerignorePath, "#{newContents}\n", callback
 
 module.exports = ProjectService
