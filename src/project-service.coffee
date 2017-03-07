@@ -87,17 +87,14 @@ class ProjectService
       yaml.write @travisYml, data, callback
 
   _modifyDockerfile: (callback) =>
-    packageJSON = @_getPackage()
-    return callback null unless packageJSON?
     fs.readFile @dockerFilePath, (error, contents) =>
       return callback error if error?
       contents = contents.toString()
-      if _.some packageJSON.dependencies, 'express' and !_.includes contents, 'HEALTHCHECK'
-        console.log colors.magenta('NOTICE'), colors.white('make sure you add a HEALTHCHECK to your Dockerfile')
-        console.log '  ', colors.cyan('Example'), colors.white('`HEALTHCHECK CMD curl --fail http://localhost:80/healthcheck || exit 1`')
-      unless _.includes contents, 'node:7-apline'
-        console.log colors.yellow('IMPORTANT!!!'), colors.white('Please use node:7-apline in your Dockerfile')
-        console.log '  ', colors.cyan('Example'), colors.white('`FROM node:7-alpine`')
+      if _.includes contents, 'FROM node'
+        console.log colors.magenta('NOTICE'), colors.white('use an octoblu base image in your Dockerfile')
+        console.log '  ', colors.cyan('Web Service:'), colors.white('`FROM octoblu/node:7-webservice-onbuild`')
+        console.log '  ', colors.cyan('Worker:     '), colors.white('`FROM octoblu/node:7-alpine-gyp`')
+        console.log '  ', colors.cyan('Static Site:'), colors.white('`FROM octoblu/docker-nginx:static-onbuild`')
       callback null
 
   _modifyDockerignore: (callback) =>
