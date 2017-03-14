@@ -93,8 +93,9 @@ class ProjectService
       if _.includes contents, 'FROM node'
         console.log colors.magenta('NOTICE'), colors.white('use an octoblu base image in your Dockerfile')
         console.log '  ', colors.cyan('Web Service:'), colors.white('`FROM octoblu/node:7-webservice-onbuild`')
-        console.log '  ', colors.cyan('Worker:     '), colors.white('`FROM octoblu/node:7-alpine-gyp`')
-        console.log '  ', colors.cyan('Static Site:'), colors.white('`FROM octoblu/docker-nginx:static-onbuild`')
+        console.log '  ', colors.cyan('Worker:     '), colors.white('`FROM octoblu/node:7-worker-onbuild`')
+        console.log '  ', colors.cyan('Static Site:'), colors.white('`FROM octoblu/node:7-staticsite-onbuild`')
+        console.log '  ', colors.cyan('Other:      '), colors.white('`FROM octoblu/node:7-alpine-gyp`')
       callback null
 
   _modifyDockerignore: (callback) =>
