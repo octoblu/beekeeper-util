@@ -1,3 +1,4 @@
+_            = require 'lodash'
 url          = require 'url'
 dockerHubApi = require '@octoblu/docker-hub-api'
 colors       = require 'colors'
@@ -24,9 +25,9 @@ class DockerHubService
       @_ensureWebhook callback
 
   _ensureRepository: (callback) =>
-    @_repositoryExists (error, exists) =>
+    @_getRepository (error, repo) =>
       return callback error if error?
-      return callback null if exists
+      return @_deleteBuildTag callback if repo?
       @_createRepository callback
 
   _ensureWebhook: (callback) =>
@@ -44,12 +45,12 @@ class DockerHubService
       active: true,
       description: "docker registry for #{@owner}/#{@repo}"
       build_tags: [
-        {
-          name: '{sourceref}',
-          source_name: '/v.*/',
-          source_type: 'Tag',
-          dockerfile_location: "/",
-        }
+        # {
+        #   name: '{sourceref}',
+        #   source_name: '/v.*/',
+        #   source_type: 'Tag',
+        #   dockerfile_location: "/",
+        # }
       ],
       is_private: @isPrivate,
       provider: 'github',
@@ -65,15 +66,42 @@ class DockerHubService
         debug 'create automated build failed', error
         callback error
 
-  _repositoryExists: (callback) =>
-    debug 'checking if repository exists'
-    dockerHubApi.repository(@owner, @repo)
+  _deleteBuildTag: (callback) =>
+    @_getBuildTags (error, tag) =>
+      return callback error if error?
+      return callback null unless tag?
+      dockerHubApi.deleteBuildTag @owner, @repo, tag.id
+        .then =>
+          console.log colors.magenta('NOTICE'), colors.white('removed the automated build in docker hub')
+          callback null
+        .catch (error) =>
+          callback error
+
+  _getRepository: (callback) =>
+    debug 'getting repository'
+    dockerHubApi.repository @owner, @repo
       .then (repository) =>
         debug 'got respository', repository
-        callback null, repository?
+        callback null, repository
       .catch (error) =>
-        return callback null, false if error.message == 'Object not found'
+        return callback null if error.message == 'Object not found'
         debug 'get registory error', error
+        callback error
+
+  _getBuildTags: (callback) =>
+    dockerHubApi.buildSettings @owner, @repo
+      .then (settings) =>
+        debug 'got settings', settings
+        build_tags = _.get settings, 'build_tags'
+        build_tag = _.find build_tags, {
+          name: '{sourceref}',
+          source_name: '/v.*/',
+          source_type: 'Tag',
+          dockerfile_location: "/",
+        }
+        debug 'got tag', build_tag
+        callback null, build_tag
+      .catch (error) =>
         callback error
 
   _removeV1Webhook: (callback) =>

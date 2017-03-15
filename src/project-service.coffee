@@ -87,9 +87,8 @@ class ProjectService
       yaml.write @travisYml, data, callback
 
   _modifyDockerfile: (callback) =>
-    fs.readFile @dockerFilePath, (error, contents) =>
+    @_getFile @dockerFilePath, (error, contents) =>
       return callback error if error?
-      contents = contents.toString()
       if _.includes contents, 'FROM node'
         console.log colors.magenta('NOTICE'), colors.white('use an octoblu base image in your Dockerfile')
         console.log '  ', colors.cyan('Web Service:'), colors.white('`FROM octoblu/node:7-webservice-onbuild`')
@@ -99,13 +98,19 @@ class ProjectService
       callback null
 
   _modifyDockerignore: (callback) =>
-    fs.readFile @dockerignorePath, (error, contents) =>
-      console.error error if error?
-      return callback null if error?
-      contents = contents.toString()
+    @_getFile @dockerignorePath, (error, contents) =>
+      return callback error if error?
       newContents = contents.replace('test\n', '')
       return callback null if contents == newContents
       console.log colors.magenta('NOTICE'), colors.white('modifying .dockerignore')
       fs.writeFile @dockerignorePath, "#{newContents}\n", callback
+
+  _getFile: (filePath, callback) =>
+    fs.open filePath, 'r', (error) =>
+      return callback null, '' if _.get(error, 'code') == 'ENOENT'
+      return callback error if error?
+      fs.readFile filePath, 'utf8', (error, contents='') =>
+        return callback error if error?
+        callback null, contents.toString()
 
 module.exports = ProjectService

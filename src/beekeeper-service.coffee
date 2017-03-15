@@ -71,7 +71,6 @@ class BeekeeperService
     request.post options, (error, response, body) =>
       return callback error if error?
       if response.statusCode > 399
-        console.log body
         message = _.get body, 'error', 'Error from beekeeper service'
         return callback new Error message
       callback()
