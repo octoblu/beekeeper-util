@@ -1,6 +1,6 @@
 {
   "name": "beekeeper-util",
-  "version": "6.0.1",
+  "version": "6.1.0",
   "description": "CLI utility for managing the beekeeper-service",
   "keywords": [
     "beekeeper"
@@ -19,6 +19,7 @@
     "beekeeper-pingdom": "./command-pingdom.js",
     "beekeeper-status-notify": "./command-status-notify.js",
     "beekeeper-status": "./command-status.js",
+    "beekeeper-tag": "./command-tag.js",
     "beekeeper-update": "./command-update.js",
     "beekeeper-webhook": "./command-webhook.js",
     "beekeeper": "./command.js",

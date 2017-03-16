@@ -62,6 +62,20 @@ class BeekeeperService
         return callback new Error message
       callback()
 
+  tagDeployment: ({ owner, repo, tag, tagName }, callback) =>
+    options =
+      baseUrl: @beekeeperUri
+      uri: "/deployments/#{owner}/#{repo}/#{tag}/tags"
+      json: { tagName }
+    debug 'tag deployment options', options
+    request.post options, (error, response, body) =>
+      return callback error if error?
+      if response.statusCode > 399
+        message = _.get body, 'error'
+        message ?= "Unexpected Status Code #{response.statusCode}"
+        return callback new Error message
+      callback()
+
   webhook: ({ owner, repo, tag, ci_passing, type }, callback) =>
     options =
       baseUrl: @beekeeperUri

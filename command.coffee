@@ -10,6 +10,7 @@ program
   .command 'pingdom', 'configure a project to use pingdom'
   .command 'status-notify', 'get the status of a current deployment and notify when done'
   .command 'status', 'get the status of a current deployment'
+  .command 'tag', 'tag a deployment'
   .command 'update', 'update a deployment'
   .command 'webhook', 'trigger webhook deployment'
 
