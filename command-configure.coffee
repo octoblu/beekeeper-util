@@ -81,7 +81,7 @@ class Command
 
       @isPrivate = githubRepo.private
 
-      async.parallel [
+      async.series [
         async.apply @travisService.configure, { @repo, @owner, @isPrivate }
         async.apply @codecovService.configure, { @repo, @owner, @isPrivate }
         async.apply @codecovService.configureEnv, { @repo, @owner, @isPrivate }
