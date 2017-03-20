@@ -1,4 +1,3 @@
-colors      = require 'colors'
 program     = require 'commander'
 packageJSON = require './package.json'
 

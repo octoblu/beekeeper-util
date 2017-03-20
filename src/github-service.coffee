@@ -1,5 +1,3 @@
-_                 = require 'lodash'
-url               = require 'url'
 request           = require 'request'
 debug             = require('debug')('beekeeper-util:github-service')
 
@@ -8,7 +6,7 @@ class GithubService
     throw new Error 'Missing config argument' unless config?
     throw new Error 'Missing githubToken argument' unless @githubToken?
 
-  getRepo: ({ repo, owner, isPrivate }, callback) =>
+  getRepo: ({ repo, owner }, callback) =>
     debug 'checking if repo exists'
     @_request { pathname: "/repos/#{owner}/#{repo}" }, (error, repo) =>
       return callback error if error?

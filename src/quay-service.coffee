@@ -1,7 +1,5 @@
-_       = require 'lodash'
 request = require 'request'
 async   = require 'async'
-url     = require 'url'
 colors  = require 'colors'
 debug   = require('debug')('beekeeper-util:quay-service')
 

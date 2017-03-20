@@ -1,5 +1,3 @@
-_       = require 'lodash'
-url     = require 'url'
 request = require 'request'
 debug   = require('debug')('beekeeper-util:travis-github-token')
 
@@ -7,9 +5,8 @@ class TravisGithubToken
   constructor: ({ @githubToken }) ->
     throw new Error 'Missing githubToken argument' unless @githubToken?
 
-  getToken: ({ repo, owner, isPrivate }, callback) =>
+  getToken: ({ isPrivate }, callback) =>
     return callback() unless isPrivate
-
     options = {
       baseUrl: 'https://api.travis-ci.com'
       uri: '/auth/github'

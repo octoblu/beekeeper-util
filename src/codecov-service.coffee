@@ -1,5 +1,4 @@
 _                 = require 'lodash'
-url               = require 'url'
 request           = require 'request'
 debug             = require('debug')('beekeeper-util:codecov-service')
 
@@ -28,16 +27,14 @@ class CodecovService
       uploadToken = _.get result, 'repo.upload_token'
       @travisService.updateEnv { @repo, @owner, @isPrivate, envName: 'CODECOV_TOKEN', envValue: uploadToken }, callback
 
-  getRepo: ({repo, owner, isPrivate}, callback) =>
+  getRepo: ({repo, owner}, callback) =>
     debug 'checking if repo exists'
     @_request { pathname: "/#{owner}/#{repo}" }, (error, repo) =>
       return callback error if error?
       debug 'repo', repo
       callback null, repo
 
-  enableRepo: ({ repo, owner, isPrivate }, callback) =>
-    return callback error if error?
-
+  enableRepo: ({ repo, owner }, callback) =>
     body = 'action=activate'
     @_request { pathname: "/#{owner}/#{repo}/settings", method: 'POST', body }, (error) =>
       return callback error if error?

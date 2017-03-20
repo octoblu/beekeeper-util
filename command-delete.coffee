@@ -1,8 +1,6 @@
-_           = require 'lodash'
 colors      = require 'colors'
 program     = require 'commander'
 moment      = require 'moment'
-cliClear    = require 'cli-clear'
 packageJSON = require './package.json'
 
 Config           = require './src/config'
@@ -36,15 +34,16 @@ class Command
     return { repo, owner, tag }
 
   run: =>
-    {repo, owner, tag, json } = @parseOptions()
-    @beekeeperService.delete { repo, owner, tag }, (error, deployment) =>
+    {repo, owner, tag} = @parseOptions()
+    @beekeeperService.delete { repo, owner, tag }, (error) =>
       return @die error if error?
       console.log '[deleted at] ', colors.cyan moment().toString()
       @die()
 
   dieHelp: (error) =>
+    console.error error.toString()
     program.outputHelp()
-    return @die error
+    process.exit 1
 
   die: (error) =>
     return process.exit(0) unless error?

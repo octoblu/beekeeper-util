@@ -1,7 +1,6 @@
 async             = require 'async'
 colors            = require 'colors'
 program           = require 'commander'
-debug             = require('debug')('beekeeper-util:command-configure')
 
 Config            = require './src/config.coffee'
 QuayService       = require './src/quay-service.coffee'
@@ -77,7 +76,7 @@ class Command
 
   run: =>
     @githubService.getRepo { @repo, @owner }, (error, githubRepo) =>
-      return callback error if error?
+      return @die error if error?
 
       @isPrivate = githubRepo.private
 
@@ -95,8 +94,9 @@ class Command
         process.exit 0
 
   dieHelp: (error) =>
+    console.error error.toString()
     program.outputHelp()
-    return @die error
+    process.exit 1
 
   die: (error) =>
     return process.exit(0) unless error?

@@ -1,8 +1,5 @@
-_             = require 'lodash'
-path          = require 'path'
 colors        = require 'colors'
 program       = require 'commander'
-debug         = require('debug')('beekeeper-util:command-pingdom')
 
 PingdomService = require './src/pingdom-service'
 packageJSON    = require './package.json'
@@ -46,8 +43,9 @@ class Command
       process.exit 0
 
   dieHelp: (error) =>
+    console.error error.toString()
     program.outputHelp()
-    return @die error
+    process.exit 1
 
   die: (error) =>
     return process.exit(0) unless error?

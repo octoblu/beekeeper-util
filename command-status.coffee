@@ -60,8 +60,9 @@ class Command
     @statusService.run()
 
   dieHelp: (error) =>
+    console.error error.toString()
     program.outputHelp()
-    return @die error
+    process.exit 1
 
   die: (error) =>
     return process.exit(0) unless error?

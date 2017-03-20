@@ -1,6 +1,5 @@
 _                 = require 'lodash'
 async             = require 'async'
-url               = require 'url'
 request           = require 'request'
 debug             = require('debug')('beekeeper-util:travis-service')
 TravisGithubToken = require './travis-github-token.coffee'
@@ -27,7 +26,7 @@ class TravisService
         return error if error?
         @enableRepo { @repo, @owner, @isPrivate }, callback
 
-  getRepo: ({repo, owner, isPrivate}, callback) =>
+  getRepo: ({repo, owner}, callback) =>
     debug 'checking if repo exists'
     @_request { pathname: "/repos/#{owner}/#{repo}" }, (error, repo) =>
       return callback error if error?
