@@ -56,11 +56,11 @@ class StatusService
     cliClear()
     console.log '[refreshed at] ', colors.cyan moment().toString()
 
-  end: ({ exitCode, passing, notFound }) =>
+  end: ({ exitCode, pending, passing, notFound }) =>
     return @waitForVersion() if @serviceUrl? && passing
-    return _.delay @run, 10000 if @watch and !@exit
+    return _.delay @run, 10000 if @watch and pending
     @doNotify { passing, notFound }
-    process.exit exitCode
+    process.exit exitCode if pending
 
   doNotify: ({ passing, notFound }) =>
     return unless @notify
@@ -98,7 +98,7 @@ class StatusService
 
   printJSON: (deployment) =>
     console.log JSON.stringify deployment, null, 2
-    @end 0
+    @end { exitCode: 0 }
 
   printHeader: (slug) =>
     console.log ''
@@ -155,7 +155,7 @@ class StatusService
     console.log "#{colors.bold('Created')}   ", @prettyDate(created_at)
     @printComponents updated_at
     console.log ''
-    @end { exitCode: 0, passing: false }
+    @end { exitCode: 0, pending: true }
 
   printFailed: ({ created_at, updated_at }, reason) =>
     console.log ''
