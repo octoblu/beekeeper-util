@@ -21,6 +21,7 @@ class StatusService
       @exit
       @notify
       serviceUrl
+      @filter
     } = options
     @serviceUrl = @getServiceUrl serviceUrl
     @config = new Config()
@@ -38,7 +39,7 @@ class StatusService
 
   run: =>
     @start()
-    @beekeeperService.getTag { @repo, @owner, @tag }, (error, deployment, latest) =>
+    @beekeeperService.getTag { @repo, @owner, @tag, @filter }, (error, deployment, latest) =>
       return @die error if error?
       return @printJSON deployment if @json
       @printHeader "#{@owner}/#{@repo}:#{@tag}" unless deployment?
@@ -55,30 +56,38 @@ class StatusService
     cliClear()
     console.log '[refreshed at] ', colors.cyan moment().toString()
 
-  end: (exitCode, passing) =>
+  end: ({ exitCode, passing, notFound }) =>
     return @waitForVersion() if @serviceUrl? && passing
-    @doNotify() if passing
-    return process.exit(0) if @exit && passing
-    return _.delay @run, 10000 if @watch
+    return _.delay @run, 10000 if @watch and !@exit
+    @doNotify { passing, notFound }
     process.exit exitCode
 
-  doNotify: =>
+  doNotify: ({ passing, notFound }) =>
     return unless @notify
+    message = 'Service Deployed!'
+    sound   = 'Purr'
+    unless passing
+      message = 'Deployment Failed!'
+      sound = 'Basso'
+    if notFound
+      message = 'Deployment Not Found!'
+      sound   = 'Funk'
     notifier.notify {
       title: 'Beekeeper'
       subtitle: "#{@repo}:#{@tag}"
-      message: 'Service Deployed!'
+      message: message
       icon: path.join(__dirname, '..', 'assets', 'beekeeper.png')
-      sound: true
+      sound: sound
       open: @serviceUrl
+      timeout: 10
     }
 
   waitForVersion: =>
     @checkVersion (error, passing) =>
       return @die error if error?
       @printVersionResult { passing }
-      return _.delay @waitForVersion, 1000 unless passing
-      @doNotify()
+      return _.delay @waitForVersion, 3000 unless passing
+      @doNotify { passing }
       process.exit 0
 
   checkVersion: (callback) =>
@@ -100,16 +109,24 @@ class StatusService
     latestSlug = "#{latest.owner_name}/#{latest.repo_name}:#{latest.tag}" if latest?
     deploymentSlug = "#{deployment.owner_name}/#{deployment.repo_name}:#{deployment.tag}"
     console.log ''
+    colorTitle = (str='') =>
+      return colors.cyan(str)
+    colorValue = (str='') =>
+      return colors.white(str)
+    colorList = (arr=[]) =>
+      return colors.italic(_.join(arr, ', '))
+
     unless latest?
-      console.log "#{colors.cyan('There is no latest version, maybe it has never been deployed?')}"
-      console.log colors.bold("#{colors.cyan('Desired:')}"), colors.bold(deploymentSlug)
-      return
+      console.log colorTitle('There is no latest version, maybe it has never been deployed?')
+      console.log colorTitle('Desired'), colorValue(deploymentSlug)
     else if deployment.tag == latest.tag
-      console.log "#{colors.cyan('Running:')}", deploymentSlug
-      return
+      console.log colorTitle('Running'), colorValue(deploymentSlug)
     else
-      console.log "#{colors.cyan('Running:')}", latestSlug
-      console.log colors.bold("#{colors.cyan('Desired:')}"), colors.bold(deploymentSlug)
+      console.log colorTitle('Running'), colorValue(latestSlug)
+      console.log colorTitle('Desired'), colorValue(deploymentSlug)
+
+    unless _.isEmpty deployment.tags
+      console.log colorTitle('Tag    '), colorList(deployment.tags)
 
   printPassing: ({ created_at, docker_url }) =>
     console.log ''
@@ -117,7 +134,7 @@ class StatusService
     console.log "#{colors.bold('Docker')}  ", colors.underline(docker_url)
     console.log "#{colors.bold('Created')} ", @prettyDate(created_at)
     console.log ''
-    @end 0, true
+    @end { exitCode: 0, passing: true }
 
   printVersionResult: ({ passing }) =>
     if passing
@@ -138,7 +155,7 @@ class StatusService
     console.log "#{colors.bold('Created')}   ", @prettyDate(created_at)
     @printComponents updated_at
     console.log ''
-    @end 0, false
+    @end { exitCode: 0, passing: false }
 
   printFailed: ({ created_at, updated_at }, reason) =>
     console.log ''
@@ -148,13 +165,13 @@ class StatusService
     console.log ''
     @printComponents updated_at
     console.log ''
-    @end 1, false
+    @end { exitCode: 1, passing: false }
 
   printNotFound: =>
     console.log ''
     console.log "#{colors.bold('Build')} ", colors.yellow.underline('Not found!')
     console.log ''
-    @end 1, false
+    @end { exitCode: 1, notFound: true, passing: false }
 
   printComponents: (components) =>
     return console.log("#{colors.bold('No completed components')}") if _.isEmpty components

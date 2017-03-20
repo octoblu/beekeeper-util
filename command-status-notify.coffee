@@ -7,11 +7,13 @@ StatusService    = require './src/status-service'
 program
   .version packageJSON.version
   .usage '[options] <project-name>'
-  .option '-t, --tag <tag>', 'Project tag. Defaults to package.version'
+  .option '-f, --filter [<tag>,<tag>...]',
+    'Filter by beekeeper tag (not related to git tags or the package.version).'
+  .option '-j, --json', 'Print JSON'
   .option '-l, --latest', 'Override the tag with "latest"'
   .option '-o, --owner <octoblu>', 'Project owner'
+  .option '-t, --tag <tag>', 'Project version (not the tag on the deployment). Defaults to package.version'
   .option '-u, --service-url <url>', 'Poll <service-url>/version for the updated version'
-  .option '-j, --json', 'Print JSON'
 
 class Command
   constructor: ->
@@ -31,6 +33,7 @@ class Command
       tag
       latest
       serviceUrl
+      filter
     } = program
     owner ?= 'octoblu'
     tag = @config.getVersion(tag)
@@ -48,6 +51,7 @@ class Command
       exit: true
       notify: true
       serviceUrl
+      filter
     }
 
   run: =>

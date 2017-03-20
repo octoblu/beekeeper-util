@@ -9,7 +9,7 @@ BeekeeperService = require './src/beekeeper-service'
 program
   .version packageJSON.version
   .usage '[options] <project-name>'
-  .option '-t, --tag <tag>', 'Project tag. Defaults to package.version'
+  .option '-t, --tag <tag>', 'Project version (not the tag on the deployment). Defaults to package.version'
   .option '-o, --owner <octoblu>', 'Project owner'
 
 class Command

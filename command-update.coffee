@@ -8,7 +8,7 @@ program
   .version packageJSON.version
   .usage '[options] <project-name>'
   .option '-d, --docker-url <docker-url>', '(required) Docker URL to update'
-  .option '-t, --tag <tag>', 'Project tag. Defaults to package.version'
+  .option '-t, --tag <tag>', 'Project version (not the tag on the deployment). Defaults to package.version'
   .option '-o, --owner <octoblu>', 'Project owner'
 
 class Command

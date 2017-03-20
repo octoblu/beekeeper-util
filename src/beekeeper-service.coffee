@@ -12,21 +12,23 @@ class BeekeeperService
       auth: config['beekeeper'].auth
     }
 
-  getTag: ({ owner, repo, tag }, callback) =>
-    @_getTag { owner, repo, tag }, (error, deployment) =>
+  getTag: ({ owner, repo, tag, filter }, callback) =>
+    @_getTag { owner, repo, tag, filter }, (error, deployment) =>
       return callback error if error?
       return callback null, deployment, deployment if tag == 'latest'
-      @_getTag { owner, repo, tag: 'latest' }, (error, latest) =>
+      @_getTag { owner, repo, tag: 'latest', filter }, (error, latest) =>
         return callback error if error?
         if deployment?.tag == latest?.tag
           return callback null, latest, latest
         callback null, deployment, latest
 
-  _getTag: ({ owner, repo, tag }, callback) =>
+  _getTag: ({ owner, repo, tag, filter }, callback) =>
     options =
       baseUrl: @beekeeperUri
       uri: "/deployments/#{owner}/#{repo}/#{tag}"
       json: true
+      qs:
+        tags: filter
     debug 'get tag options', options
     request.get options, (error, response, body) =>
       debug 'got tag', { body, error }
