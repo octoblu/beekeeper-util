@@ -20,7 +20,7 @@ program
   .option '--docker-hub-token <docker-hub-token>', 'Docker Hub login token. (env: DOCKER_HUB_LOGIN_TOKEN)'
   .option '--quay-token <quay-token>', 'Quay API Token. (env: QUAY_TOKEN)'
   .option '--codefresh-token <codefresh-token>', 'Codefresh API Token. (env: CODEFRESH_TOKEN)'
-  .option '--github-token <github-token>', 'Github API Token. (env: GITHUB_TOKEN)'
+  .option '--github-token <github-token>', 'Github API Token. (env: BEEKEEPER_GITHUB_TOKEN)'
   .option '--codecov-token <codecov-token>', 'Codecov API Token. (env: CODECOV_TOKEN)'
 
 class Command
@@ -55,13 +55,13 @@ class Command
     quayToken ?= process.env.QUAY_TOKEN
     dockerHubToken ?= process.env.DOCKER_HUB_LOGIN_TOKEN
     codefreshToken ?= process.env.CODEFRESH_TOKEN
-    githubToken ?= process.env.GITHUB_TOKEN
+    githubToken ?= process.env.BEEKEEPER_GITHUB_TOKEN
     codecovToken ?= process.env.CODECOV_TOKEN
 
     @dieHelp new Error 'Missing QUAY_TOKEN' unless quayToken?
     @dieHelp new Error 'Missing DOCKER_HUB_LOGIN_TOKEN' unless dockerHubToken?
     @dieHelp new Error 'Missing CODEFRESH_TOKEN' unless codefreshToken?
-    @dieHelp new Error 'Missing GITHUB_TOKEN' unless githubToken?
+    @dieHelp new Error 'Missing BEEKEEPER_GITHUB_TOKEN' unless githubToken?
     @dieHelp new Error 'Missing CODECOV_TOKEN' unless codecovToken?
 
     return {

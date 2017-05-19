@@ -36,17 +36,19 @@ class CodefreshService
       callback null, defaults
 
   _createService: ({ defaults }, callback) =>
-    debug 'service does not exist, but I will make it exist'
-    createBody = @_convertDefaults { defaults }
-    debug 'createBody', createBody
-    options = {
-      pathname: "/services/#{@owner}/#{@repo}/create"
-      method: 'POST'
-      json: createBody
-    }
-    @_request options, (error) =>
+    @_getRegistryId (error, registryId) =>
       return callback error if error?
-      callback null
+      debug 'service does not exist, but I will make it exist'
+      createBody = @_convertDefaults { defaults, registryId }
+      debug 'createBody', createBody
+      options = {
+        pathname: "/services/#{@owner}/#{@repo}/create"
+        method: 'POST'
+        json: createBody
+      }
+      @_request options, (error) =>
+        return callback error if error?
+        callback null
 
   _serviceExists: (callback) =>
     debug 'checking if service exists'
@@ -54,6 +56,14 @@ class CodefreshService
       return callback error if error?
       debug 'services', services
       callback null, !_.isEmpty services
+
+  _getRegistryId: (callback) =>
+    @_request { pathname: "/registries" }, (error, registries) =>
+      return callback error if error?
+      item = _.find registries, provider: 'dockerhub'
+      unless item?
+        return callback new Error('Docker Hub is not configured in codefresh')
+      callback null, _.get item, '_id'
 
   _request: ({ method='GET', pathname, json=true }, callback) =>
     throw new Error 'CodefreshService->_request: requires pathname' unless pathname?
@@ -69,12 +79,12 @@ class CodefreshService
     request options, (error, response, body) =>
       return callback error if error?
       debug 'got response', response.statusCode
-      if response.statusCode > 499
+      if response.statusCode > 399
         debug response.statusCode, body
         return callback new Error "Unexpected Response #{response.statusCode}"
       callback null, body
 
-  _convertDefaults: ({ defaults }) =>
+  _convertDefaults: ({ defaults, registryId }) =>
     service = _.cloneDeep defaults
     _.set service, 'deploy_sh',  '''
       yarn global add beekeeper-util
@@ -90,7 +100,7 @@ class CodefreshService
       }
     ]
     _.set service, 'useDockerfileFromRepo', true
-    _.set service, 'registry', 'dockerhub'
+    _.set service, 'registry', registryId
     _.set service, 'imageName', "#{@owner}/#{@repo}"
     _.set service, 'webhookFilter', [
       {
