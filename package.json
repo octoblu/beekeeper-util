@@ -1,6 +1,6 @@
 {
   "name": "beekeeper-util",
-  "version": "7.0.0",
+  "version": "7.1.0",
   "description": "CLI utility for managing the beekeeper-service",
   "keywords": [
     "beekeeper"
@@ -39,11 +39,11 @@
   },
   "dependencies": {
     "@octoblu/docker-hub-api": "^1.0.2",
-    "async": "^2.4.0",
+    "async": "^2.4.1",
     "cli-clear": "^1.0.4",
     "coffee-script": "^1.12.6",
     "colors": "^1.1.2",
-    "commander": "^2.9.0",
+    "commander": "^2.10.0",
     "debug": "^2.6.8",
     "lodash": "^4.17.4",
     "moment": "^2.18.1",
@@ -52,14 +52,14 @@
     "request": "^2.81.0"
   },
   "devDependencies": {
-    "chai": "^3.5.0",
+    "chai": "^4.0.2",
     "coffee-coverage": "^2.0.1",
-    "mocha": "^3.4.1",
+    "mocha": "^3.4.2",
     "mocha-multi": "^0.11.0",
     "mocha-osx-reporter": "^0.1.2",
-    "nyc": "^10.3.2",
-    "sinon": "^2.2.0",
-    "sinon-chai": "^2.10.0"
+    "nyc": "^11.0.2",
+    "sinon": "^2.3.5",
+    "sinon-chai": "^2.11.0"
   },
   "peerDependencies": {},
   "engines": {

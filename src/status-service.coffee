@@ -29,7 +29,7 @@ class StatusService
 
   getServiceUrl: (serviceUrl) =>
     return unless serviceUrl?
-    unless _.includes serviceUrl, 'http'
+    unless _.startsWith serviceUrl, 'http'
       serviceUrl = "https://#{serviceUrl}"
     urlParts = url.parse serviceUrl, true
     urlParts.pathname = '/version'
@@ -38,7 +38,7 @@ class StatusService
     return url.format urlParts
 
   run: =>
-    @start()
+    @clear()
     @beekeeperService.getTag { @repo, @owner, @tag, @filter }, (error, deployment, latest) =>
       return @die error if error?
       return @printJSON deployment if @json
@@ -51,13 +51,13 @@ class StatusService
         return @printPassing deployment, 'CI passed but no docker build'
       @printPending deployment
 
-  start: =>
+  clear: =>
     return unless @watch
     cliClear()
     console.log '[refreshed at] ', colors.cyan moment().toString()
 
   end: ({ exitCode, pending, passing, notFound }) =>
-    return @waitForVersion() if @serviceUrl? && passing
+    return _.delay @waitForVersion, 3000 if @serviceUrl? && passing
     return _.delay @run, 10000 if @watch and pending
     @doNotify { passing, notFound }
     process.exit exitCode if pending
@@ -82,19 +82,22 @@ class StatusService
       timeout: 10
     }
 
-  waitForVersion: =>
-    @checkVersion (error, passing) =>
+  waitForVersion: (successCount=0) =>
+    @clear()
+    @checkVersion successCount, (error, successCount) =>
       return @die error if error?
+      passing = successCount > 3
       @printVersionResult { passing }
-      return _.delay @waitForVersion, 3000 unless passing
+      return _.delay @waitForVersion, 3000, successCount unless passing
       @doNotify { passing }
       process.exit 0
 
-  checkVersion: (callback) =>
+  checkVersion: (successCount, callback) =>
     request.get @serviceUrl, { json: true }, (error, response, body) =>
       return callback error if error?
       tag = @tag.replace 'v', ''
-      callback null, body.version == tag
+      return callback null, 0 unless body.version == tag
+      callback null, ++successCount
 
   printJSON: (deployment) =>
     console.log JSON.stringify deployment, null, 2
@@ -115,6 +118,9 @@ class StatusService
       return colors.white(str)
     colorList = (arr=[]) =>
       return colors.italic(_.join(arr, ', '))
+
+    if @serviceUrl?
+      console.log colors.gray('Service: '), colors.gray(@serviceUrl)
 
     unless latest?
       console.log colorTitle('There is no latest version, maybe it has never been deployed?')
@@ -137,9 +143,10 @@ class StatusService
     @end { exitCode: 0, passing: true }
 
   printVersionResult: ({ passing }) =>
+    console.log ''
     if passing
       message = "Service is running #{@tag}!"
-      console.log "#{colors.cyan(message)}   "
+      console.log "#{colors.green(message)}   "
     else
       message = "Waiting for service to run #{@tag}..."
       console.log "#{colors.yellow(message)}   "
