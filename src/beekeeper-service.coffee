@@ -5,12 +5,13 @@ debug   = require('debug')('beekeeper-util:service')
 
 class BeekeeperService
   constructor: ({ config, @beekeeperUri }) ->
-    @beekeeperUri ?= url.format {
+    @beekeeperUri ?= process.env.BEEKEEPER_URI || url.format {
       hostname: config['beekeeper'].hostname,
       protocol: 'https',
       slashes: true,
       auth: config['beekeeper'].auth
     }
+    debug 'using beekeeperUri', { @beekeeperUri }
 
   getTag: ({ owner, repo, tag, filter }, callback) =>
     @_getTag { owner, repo, tag, filter }, (error, deployment) =>

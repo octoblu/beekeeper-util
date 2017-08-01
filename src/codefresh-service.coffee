@@ -4,10 +4,10 @@ request = require 'request'
 debug   = require('debug')('beekeeper-util:codefresh-service')
 
 class CodefreshService
-  constructor: ({ config, @codefreshToken }) ->
+  constructor: ({ config, @codefreshToken, @beekeeperUri }) ->
     throw new Error 'Missing config argument' unless config?
     throw new Error 'Missing codefreshToken argument' unless @codefreshToken?
-    @beekeeperUri = url.format {
+    @beekeeperUri ?= process.env.BEEKEEPER_URI || url.format {
       hostname: config['beekeeper'].hostname,
       protocol: 'https',
       slashes: true,

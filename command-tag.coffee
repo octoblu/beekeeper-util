@@ -12,6 +12,7 @@ program
   .option '-r, --repo <repo-name>', 'Project repo name. Defaults to package.name'
   .option '-t, --tag <tag>', 'Project version (not the tag on the deployment). Defaults to package.version'
   .option '-o, --owner <octoblu>', 'Project owner'
+  .option '--prompt', 'Prompt before tagging. Defaults to false'
 
 class Command
   constructor: ->
@@ -23,7 +24,7 @@ class Command
     program.parse process.argv
     tagName = program.args[0]
 
-    { owner, tag, repo } = program
+    { owner, tag, repo, prompt } = program
     repo = @config.getName(repo)
     owner ?= 'octoblu'
     tag = @config.getVersion(tag)
@@ -32,10 +33,10 @@ class Command
     @dieHelp new Error 'Must specify a repo' unless repo?
     @dieHelp new Error 'Must specify a version to deploy (-t,--tag)' unless tag?
 
-    return { repo, owner, tag, tagName }
+    return { repo, owner, tag, tagName, prompt }
 
   run: =>
-    {repo, owner, tag, tagName } = @parseOptions()
+    { repo, owner, tag, tagName, @prompt } = @parseOptions()
     @beekeeperService.getTag { repo, owner, tag }, (error, deployment) =>
       return @die error if error?
       return @printDeploymentMissing({ tag }) unless deployment?
@@ -50,7 +51,7 @@ class Command
 
   printAlreadyExists: ({ tagName, tag }) =>
     bold = (str) => colors.bold colors.white str
-    console.log "Tag #{bold tagName} already exists on #{bold tag}"
+    console.log "Tag #{bold tagName} already exists on version #{bold tag}"
     process.exit(0)
 
   printSuccess: ({ tag, tagName })=>
@@ -65,7 +66,7 @@ class Command
     console.log colors.red "Cowardly refusing to do anything."
     process.exit(1)
 
-  warnBeforeTag: ({ repo, taggedDeployment, tagName }, callback) =>
+  warnBeforeTag: ({ repo, tag, taggedDeployment, tagName }, callback) =>
     console.log(colors.cyan('[ IMPORTANT ]'))
     bold = (str) => colors.bold colors.white str
     warn = (str) => console.log str
@@ -76,9 +77,13 @@ class Command
     console.log ''
     @confirm "Did you test it?", =>
       @confirm "Are you sure '#{tagName}' is ready?", =>
+        console.log bold "Tagging version #{tag} with #{tagName}"
         callback()
 
   confirm: (message, callback) =>
+    unless @prompt
+      console.log colors.bold message
+      return setTimeout(callback, 1000)
     new Confirm({ message, default: false }).ask (answer) =>
       return @printUnwilling() unless answer
       callback()
