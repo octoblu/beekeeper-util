@@ -1,4 +1,7 @@
 _           = require 'lodash'
+get         = require 'lodash/fp/get'
+replace     = require 'lodash/fp/replace'
+isEqual     = require 'lodash/fp/isEqual'
 url         = require 'url'
 colors      = require 'colors'
 moment      = require 'moment'
@@ -9,6 +12,7 @@ notifier    = require 'node-notifier'
 
 Config           = require './config'
 BeekeeperService = require './beekeeper-service'
+getVersion       = replace('v', '')
 
 class StatusService
   constructor: (options) ->
@@ -84,20 +88,20 @@ class StatusService
 
   waitForVersion: (successCount=0) =>
     @clear()
-    @checkVersion successCount, (error, successCount) =>
+    @checkVersion (error, matches, currentVersion) =>
       return @die error if error?
-      passing = successCount > 3
-      @printVersionResult { passing }
-      return _.delay @waitForVersion, 3000, successCount unless passing
-      @doNotify { passing }
+      successCount++ if matches
+      @printVersionResult { currentVersion }
+      return _.delay @waitForVersion, 3000, successCount if successCount <= 3
+      @doNotify { passing: true }
       process.exit 0
 
-  checkVersion: (successCount, callback) =>
+  checkVersion: (callback) =>
     request.get @serviceUrl, { json: true }, (error, response, body) =>
       return callback error if error?
-      tag = @tag.replace 'v', ''
-      return callback null, 0 unless body.version == tag
-      callback null, ++successCount
+      currentVersion = getVersion(get('version', body))
+      matches = isEqual(getVersion(@tag), currentVersion)
+      callback null, matches, currentVersion
 
   printJSON: (deployment) =>
     console.log JSON.stringify deployment, null, 2
@@ -142,14 +146,14 @@ class StatusService
     console.log ''
     @end { exitCode: 0, passing: true }
 
-  printVersionResult: ({ passing }) =>
+  printVersionResult: ({ currentVersion }) =>
     console.log ''
-    if passing
-      message = "Service is running #{@tag}!"
-      console.log "#{colors.green(message)}   "
+    message = "Service is running v#{currentVersion}!"
+    if getVersion(currentVersion) == getVersion(@tag)
+      console.log colors.green(message)
     else
-      message = "Waiting for service to run #{@tag}..."
-      console.log "#{colors.yellow(message)}   "
+      console.log colors.white(message)
+      console.log colors.yellow("Waiting for service to run #{@tag}...")
     console.log ''
 
   printPending: ({ ci_passing, docker_url, created_at, updated_at }) =>

@@ -40,7 +40,7 @@ class Command
     @beekeeperService.getTag { repo, owner, tag }, (error, deployment) =>
       return @die error if error?
       return @printDeploymentMissing({ tag }) unless deployment?
-      @beekeeperService.getTag { repo, owner, tag, filter: tagName }, (error, taggedDeployment) =>
+      @beekeeperService.getTag { repo, owner, tag: 'latest', filter: tagName }, (error, taggedDeployment) =>
         return @die error if error?
         return @printAlreadyExists({ tagName, tag }) if taggedDeployment?.tag == tag
         @warnBeforeTag { taggedDeployment, tag, tagName, repo }, (error) =>
@@ -81,9 +81,7 @@ class Command
         callback()
 
   confirm: (message, callback) =>
-    unless @prompt
-      console.log colors.bold message
-      return setTimeout(callback, 1000)
+    return callback() unless @prompt
     new Confirm({ message, default: false }).ask (answer) =>
       return @printUnwilling() unless answer
       callback()
