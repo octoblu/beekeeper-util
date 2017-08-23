@@ -27,8 +27,9 @@ class DockerHubService
   _ensureRepository: (callback) =>
     @_getRepository (error, repo) =>
       return callback error if error?
-      return @_deleteBuildTag callback if repo?
-      @_createRepository callback
+      @_deleteBuildTag repo, (error) =>
+        return callback error if error?
+        @_createRepository callback
 
   _ensureWebhook: (callback) =>
     return callback null if @noWebhook
@@ -44,31 +45,24 @@ class DockerHubService
     details = {
       active: true,
       description: "docker registry for #{@owner}/#{@repo}"
-      build_tags: [
-        # {
-        #   name: '{sourceref}',
-        #   source_name: '/v.*/',
-        #   source_type: 'Tag',
-        #   dockerfile_location: "/",
-        # }
-      ],
       is_private: @isPrivate,
       provider: 'github',
       vcs_repo_name: "#{@owner}/#{@repo}",
     }
     debug 'create respository build details', details
     console.log colors.magenta('NOTICE'), colors.white('creating the repository hub.docker.com')
-    dockerHubApi.createAutomatedBuild @owner, @repo, details
+    dockerHubApi.createRepository @owner, @repo, details
       .then (build) =>
-        debug 'created automated build', build
+        debug 'created repository', build
         callback null
       .catch (error) =>
-        debug 'create automated build failed', error
+        debug 'create repository failed', error
         callback error
 
-  _deleteBuildTag: (callback) =>
+  _deleteBuildTag: (repo, callback) =>
+    return callback() unless repo?
     @_getBuildTags (error, tag) =>
-      return callback error if error?
+      return callback null if error?
       return callback null unless tag?
       dockerHubApi.deleteBuildTag @owner, @repo, tag.id
         .then =>
