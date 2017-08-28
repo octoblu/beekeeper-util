@@ -1,6 +1,6 @@
 {
   "name": "beekeeper-util",
-  "version": "9.0.0",
+  "version": "9.1.0",
   "description": "CLI utility for managing the beekeeper-service",
   "keywords": [
     "beekeeper"
@@ -23,6 +23,7 @@
     "beekeeper-update": "./command-update.js",
     "beekeeper-webhook": "./command-webhook.js",
     "beekeeper": "./command.js",
+    "bk": "./command.js",
     "bsn": "./command-status-notify.js",
     "bs": "./command-status.js"
   },
