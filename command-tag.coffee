@@ -3,7 +3,6 @@ Confirm     = require 'prompt-confirm'
 colors      = require 'colors/safe'
 packageJSON = require './package.json'
 
-Config           = require './src/config'
 BeekeeperService = require './src/beekeeper-service'
 
 program
@@ -15,19 +14,18 @@ program
   .option '--prompt', 'Prompt before tagging. Defaults to false'
 
 class Command
-  constructor: ->
+  constructor: (@config) ->
     process.on 'uncaughtException', @die
-    @config = new Config()
-    @beekeeperService = new BeekeeperService { config: @config.get() }
+    @beekeeperService = new BeekeeperService { @config }
 
   parseOptions: =>
     program.parse process.argv
     tagName = program.args[0]
 
-    { owner, tag, repo, prompt } = program
-    repo = @config.getName(repo)
-    owner ?= 'octoblu'
-    tag = @config.getVersion(tag)
+    { prompt } = program
+    repo = program.repo ? @config.name
+    owner = program.owner ? @config.owner
+    tag = program.tag ? @config.version
 
     @dieHelp new Error 'Missing tag argument' unless tagName?
     @dieHelp new Error 'Must specify a repo' unless repo?

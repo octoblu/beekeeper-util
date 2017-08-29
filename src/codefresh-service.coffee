@@ -1,18 +1,13 @@
 _       = require 'lodash'
-url     = require 'url'
 request = require 'request'
 debug   = require('debug')('beekeeper-util:codefresh-service')
 
 class CodefreshService
-  constructor: ({ config, @codefreshToken, @beekeeperUri }) ->
+  constructor: ({ config }) ->
     throw new Error 'Missing config argument' unless config?
-    throw new Error 'Missing codefreshToken argument' unless @codefreshToken?
-    @beekeeperUri ?= process.env.BEEKEEPER_URI || url.format {
-      hostname: config['beekeeper'].hostname,
-      protocol: 'https',
-      slashes: true,
-      auth: config['beekeeper'].auth
-    }
+    { @codefreshToken, @beekeeperUri } = config
+    throw new Error 'Missing codefreshToken in config' unless @codefreshToken?
+    throw new Error 'Missing beekeeperUri in config' unless @beekeeperUri?
 
   configure: ({ @repo, @owner, @isPrivate }, callback) =>
     debug 'setting up codefresh', { @repo, @owner, @isPrivate }

@@ -1,16 +1,12 @@
 _       = require 'lodash'
-url     = require 'url'
 request = require 'request'
 debug   = require('debug')('beekeeper-util:service')
 
 class BeekeeperService
-  constructor: ({ config, @beekeeperUri }) ->
-    @beekeeperUri ?= process.env.BEEKEEPER_URI || url.format {
-      hostname: config['beekeeper'].hostname,
-      protocol: 'https',
-      slashes: true,
-      auth: config['beekeeper'].auth
-    }
+  constructor: ({ config }) ->
+    throw new Error 'Missing config argument' unless config?
+    { @beekeeperUri } = config
+    throw new Error 'Missing beekeeperUri in config' unless @beekeeperUri?
     debug 'using beekeeperUri', { @beekeeperUri }
 
   getTag: ({ owner, repo, tag, filter }, callback) =>

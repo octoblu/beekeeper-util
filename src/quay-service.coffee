@@ -6,9 +6,11 @@ debug   = require('debug')('beekeeper-util:quay-service')
 QUAY_BASE_URL='https://quay.io/api/v1'
 
 class QuayService
-  constructor: ({ config, @quayToken }) ->
+  constructor: ({ config }) ->
     throw new Error 'Missing config argument' unless config?
-    throw new Error 'Missing quayToken argument' unless @quayToken?
+    { @quayToken } = config
+    throw new Error 'Missing quayToken in config' unless @quayToken?
+
 
   configure: ({ @repo, @owner, @isPrivate }, callback) =>
     debug 'setting up quay'

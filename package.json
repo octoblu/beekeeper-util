@@ -1,6 +1,6 @@
 {
   "name": "beekeeper-util",
-  "version": "9.1.0",
+  "version": "10.0.0",
   "description": "CLI utility for managing the beekeeper-service",
   "keywords": [
     "beekeeper"
@@ -15,8 +15,6 @@
     "beekeeper-configure": "./command-configure.js",
     "beekeeper-delete": "./command-delete.js",
     "beekeeper-get": "./command-get.js",
-    "beekeeper-hub": "./command-hub.js",
-    "beekeeper-pingdom": "./command-pingdom.js",
     "beekeeper-status-notify": "./command-status-notify.js",
     "beekeeper-status": "./command-status.js",
     "beekeeper-tag": "./command-tag.js",
@@ -46,6 +44,9 @@
     "colors": "^1.1.2",
     "commander": "^2.10.0",
     "debug": "^2.6.8",
+    "find-versions": "^2.0.0",
+    "fs-extra": "^4.0.1",
+    "git-toplevel": "^1.1.1",
     "lodash": "^4.17.4",
     "moment": "^2.18.1",
     "node-notifier": "^5.1.2",

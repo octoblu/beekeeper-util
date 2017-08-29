@@ -5,9 +5,10 @@ debug             = require('debug')('beekeeper-util:travis-service')
 TravisGithubToken = require './travis-github-token.coffee'
 
 class TravisService
-  constructor: ({ config, @githubToken }) ->
+  constructor: ({ config }) ->
     throw new Error 'Missing config argument' unless config?
-    throw new Error 'Missing githubToken argument' unless @githubToken?
+    { @githubToken } = config
+    throw new Error 'Missing githubToken in config' unless @githubToken?
 
   configure: ({ @repo, @owner, @isPrivate }, callback) =>
     debug 'setting up travis', { @repo, @owner, @isPrivate }
@@ -68,7 +69,11 @@ class TravisService
             @_request { pathname: "/settings/env_vars?repository_id=#{result.id}", json, method: 'POST' }, callback
 
   _deleteEnvVar: (envVar, callback) =>
-    @_request { pathname: "/settings/env_vars/#{envVar.id}?repository_id=#{envVar.repository_id}", method: 'DELETE'}, callback
+    options = {
+      pathname: "/settings/env_vars/#{envVar.id}?repository_id=#{envVar.repository_id}",
+      method: 'DELETE'
+    }
+    @_request options, callback
 
   _request: ({ method='GET', pathname, json=true }, callback) =>
     throw new Error 'TravisService->_request: requires pathname' unless pathname?

@@ -9,16 +9,20 @@ debug  = require('debug')('beekeeper-util:project-service')
 class ProjectService
   constructor: ({ config }) ->
     throw new Error 'Missing config argument' unless config?
-    @travisYml = path.join process.cwd(), '.travis.yml'
-    @packagePath = path.join process.cwd(), 'package.json'
-    @dockerFilePath = path.join process.cwd(), 'Dockerfile'
-    @dockerignorePath = path.join process.cwd(), '.dockerignore'
-    @webhookUrl = url.format {
-      hostname: config['beekeeper'].hostname,
-      protocol: 'https',
-      slashes: true,
-      pathname: '/webhooks/travis:ci'
-    }
+    { beekeeperUri, projectRoot } = config
+    throw new Error 'Missing beekeeperUri in config' unless @beekeeperUri?
+    throw new Error 'Missing projectRoot in config' unless @projectRoot?
+    @travisYml = path.join projectRoot, '.travis.yml'
+    @packagePath = path.join projectRoot, 'package.json'
+    @dockerFilePath = path.join projectRoot, 'Dockerfile'
+    @dockerignorePath = path.join projectRoot, '.dockerignore'
+    urlParts = url.parse beekeeperUri
+    _.set urlParts, 'slashes', true
+    delete urlParts.auth
+    delete urlParts.password
+    delete urlParts.username
+    _.set urlParts, 'pathname', '/webhooks/travis:ci'
+    @webhookUrl = url.format urlParts
 
   configure: ({ isPrivate }, callback) =>
     @_modifyTravis { isPrivate }, (error) =>
@@ -106,7 +110,7 @@ class ProjectService
       fs.writeFile @dockerignorePath, "#{newContents}\n", callback
 
   _getFile: (filePath, callback) =>
-    fs.open filePath, 'r', (error) =>
+    fs.access filePath, fs.constants.R_OK, (error) =>
       return callback null, '' if _.get(error, 'code') == 'ENOENT'
       return callback error if error?
       fs.readFile filePath, 'utf8', (error, contents='') =>

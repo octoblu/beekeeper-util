@@ -3,10 +3,11 @@ request           = require 'request'
 debug             = require('debug')('beekeeper-util:codecov-service')
 
 class CodecovService
-  constructor: ({ config, @codecovToken, @travisService }) ->
+  constructor: ({ config, @travisService }) ->
     throw new Error 'Missing config argument' unless config?
     throw new Error 'Missing travisService argument' unless @travisService?
-    throw new Error 'Missing codecovToken argument' unless @codecovToken?
+    { @codecovToken } = config
+    throw new Error 'Missing codecovToken in config' unless @codecovToken?
 
   configure: ({ @repo, @owner, @isPrivate }, callback) =>
     debug 'setting up travis', { @repo, @owner, @isPrivate }

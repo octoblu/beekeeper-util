@@ -15,15 +15,14 @@ class Command
   constructor: ->
     process.on 'uncaughtException', @die
     @config = new Config()
-    @beekeeperService = new BeekeeperService { config: @config.get() }
+    @beekeeperService = new BeekeeperService { @config }
 
   parseOptions: =>
     program.parse process.argv
-    repo = @config.getName(program.args[0])
+    repo = program.args[0] || @config.name
 
-    { owner, tag } = program
-    owner ?= 'octoblu'
-    tag = @config.getVersion(tag)
+    owner = program.owner ? @config.owner
+    tag = program.tag ? @config.version
     docker_url = program.dockerUrl
 
     @dieHelp new Error 'Missing repo argument' unless repo?

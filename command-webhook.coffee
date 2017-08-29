@@ -1,7 +1,6 @@
 program     = require 'commander'
 packageJSON = require './package.json'
 
-Config           = require './src/config'
 BeekeeperService = require './src/beekeeper-service'
 
 program
@@ -13,20 +12,17 @@ program
   .option '-o, --owner <octoblu>', 'Project owner'
 
 class Command
-  constructor: ->
+  constructor: (@config) ->
     process.on 'uncaughtException', @die
-    @config = new Config()
-    beekeeperUri = process.env.BEEKEEPER_URI
-    return @dieHelp(new Error('Missing env BEEKEEPER_URI')) unless beekeeperUri?
-    @beekeeperService = new BeekeeperService { config: null, beekeeperUri }
+    @beekeeperService = new BeekeeperService { @config }
 
   parseOptions: =>
     program.parse process.argv
-    repo = @config.getName(program.args[0])
+    repo = program.args[0] || @config.name
 
-    { owner, tag, type } = program
-    owner ?= 'octoblu'
-    tag = @config.getVersion(tag)
+    { type } = program
+    owner = program.owner ? @config.owner
+    tag ?= program.tag ? @config.version
     ci_passing = program.ciPassing
 
     @dieHelp new Error 'Missing repo argument' unless repo?

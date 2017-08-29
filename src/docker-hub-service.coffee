@@ -5,17 +5,16 @@ colors       = require 'colors'
 debug        = require('debug')('beekeeper-util:docker-hub-service')
 
 class DockerHubService
-  constructor: ({ config, dockerHubToken }) ->
+  constructor: ({ config }) ->
     throw new Error 'Missing config argument' unless config?
-    throw new Error 'Missing dockerHubToken argument' unless dockerHubToken?
-    dockerHubApi.setLoginToken(dockerHubToken)
-    @webhookUrl = url.format {
-      hostname: config['beekeeper'].hostname,
-      protocol: 'https',
-      slashes: true,
-      pathname: '/webhooks/docker:hub'
-      auth: config['beekeeper'].auth
-    }
+    { dockerHubToken, beekeeperUri } = config
+    throw new Error 'Missing dockerHubToken in config' unless dockerHubToken?
+    throw new Error 'Missing beekeeperUri in config' unless beekeeperUri?
+    dockerHubApi.setLoginToken dockerHubToken
+    urlParts = url.parse beekeeperUri
+    _.set urlParts, 'slashes', true
+    _.set urlParts, 'pathname', '/webhooks/docker:hub'
+    @webhookUrl = url.format urlParts
     debug 'webhookUrl', @webhookUrl
 
   configure: ({ @repo, @owner, @isPrivate, @noWebhook }, callback) =>

@@ -6,8 +6,6 @@ program
   .command 'configure', 'configure a project to work with beekeeper'
   .command 'delete', 'delete the current deployment'
   .command 'get', 'get the status of a current deployment (alias of "status")'
-  .command 'hub', 'configure a project to use docker hub'
-  .command 'pingdom', 'configure a project to use pingdom'
   .command 'status-notify', 'get the status of a current deployment and notify when done'
   .command 'status', 'get the status of a current deployment'
   .command 'tag', 'tag a deployment'

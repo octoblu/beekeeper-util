@@ -10,12 +10,11 @@ request     = require 'request'
 cliClear    = require 'cli-clear'
 notifier    = require 'node-notifier'
 
-Config           = require './config'
 BeekeeperService = require './beekeeper-service'
 getVersion       = replace('v', '')
 
 class StatusService
-  constructor: (options) ->
+  constructor: ({ options, @config }) ->
     {
       @repo
       @owner
@@ -28,8 +27,7 @@ class StatusService
       @filter
     } = options
     @serviceUrl = @getServiceUrl serviceUrl
-    @config = new Config()
-    @beekeeperService = new BeekeeperService { config: @config.get() }
+    @beekeeperService = new BeekeeperService { @config }
 
   getServiceUrl: (serviceUrl) =>
     return unless serviceUrl?

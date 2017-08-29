@@ -1,7 +1,6 @@
 program     = require 'commander'
 packageJSON = require './package.json'
 
-Config           = require './src/config'
 StatusService    = require './src/status-service'
 
 program
@@ -19,19 +18,13 @@ program
   .option '-w, --watch', 'Watch deployment'
 
 class Command
-  constructor: ->
+  constructor: (@config) ->
     process.on 'uncaughtException', @die
-    @config = new Config()
-    @statusService = new StatusService @parseOptions()
+    @statusService = new StatusService { options: @parseOptions(), @config }
 
   parseOptions: =>
     program.parse process.argv
-    repo = @config.getName program.args[0]
-
-    throw new Error '"get" is not a valid project name' if repo == 'get'
-
     {
-      owner
       json
       tag
       watch
@@ -41,8 +34,9 @@ class Command
       serviceUrl
       filter
     } = program
-    owner ?= 'octoblu'
-    tag = @config.getVersion(tag)
+    repo = program.args[0] || @config.name
+    owner = program.owner ? @config.owner
+    tag ?= @config.version
     tag ?= 'latest'
     tag = 'latest' if latest?
 

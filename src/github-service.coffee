@@ -2,9 +2,10 @@ request           = require 'request'
 debug             = require('debug')('beekeeper-util:github-service')
 
 class GithubService
-  constructor: ({ config, @githubToken }) ->
+  constructor: ({ config }) ->
     throw new Error 'Missing config argument' unless config?
-    throw new Error 'Missing githubToken argument' unless @githubToken?
+    { @githubToken } = config
+    throw new Error 'Missing githubToken in config' unless @githubToken?
 
   getRepo: ({ repo, owner }, callback) =>
     debug 'checking if repo exists'

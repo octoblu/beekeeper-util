@@ -1,32 +1,25 @@
 colors      = require 'colors'
 program     = require 'commander'
-moment      = require 'moment'
 packageJSON = require './package.json'
 
-Config           = require './src/config'
 BeekeeperService = require './src/beekeeper-service'
 
 program
   .version packageJSON.version
   .usage '[options] <project-name>'
-  .option '-t, --tag <tag>', 'Project version (not the tag on the deployment). Defaults to package.version'
+  .option '-t, --tag <tag>', 'Project version'
   .option '-o, --owner <octoblu>', 'Project owner'
 
 class Command
-  constructor: ->
+  constructor: (@config) ->
     process.on 'uncaughtException', @die
-    @config = new Config()
-    @beekeeperService = new BeekeeperService { config: @config.get() }
+    @beekeeperService = new BeekeeperService { @config }
 
   parseOptions: =>
     program.parse process.argv
-    repo = @config.getName(program.args[0])
-
-    throw new Error '"delete" is not a valid project name' if repo == 'delete'
-
-    { owner, tag } = program
-    owner ?= 'octoblu'
-    tag ?= @config.getVersion(tag)
+    repo = program.args[0] || @config.name
+    owner = program.owner ? @config.owner
+    tag = program.tag ? @config.version
 
     @dieHelp new Error 'Missing repo' unless repo?
     @dieHelp new Error 'Missing tag' unless tag?
@@ -37,7 +30,7 @@ class Command
     {repo, owner, tag} = @parseOptions()
     @beekeeperService.delete { repo, owner, tag }, (error) =>
       return @die error if error?
-      console.log '[deleted at] ', colors.cyan moment().toString()
+      console.log colors.bold("[DELETED]"), "tag #{tag}"
       @die()
 
   dieHelp: (error) =>
