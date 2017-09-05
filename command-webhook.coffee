@@ -1,4 +1,5 @@
 program     = require 'commander'
+semver      = require 'semver'
 packageJSON = require './package.json'
 
 BeekeeperService = require './src/beekeeper-service'
@@ -21,8 +22,8 @@ class Command
     repo = program.args[0] || @config.name
 
     { type } = program
-    owner = program.owner ? @config.owner
-    tag = program.tag ? @config.version
+    owner = program.owner || @config.owner
+    tag = semver.clean(program.tag) || @config.version
     ci_passing = program.ciPassing
 
     @dieHelp new Error 'Missing repo argument' unless repo?

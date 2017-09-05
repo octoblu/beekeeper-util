@@ -1,4 +1,5 @@
 program     = require 'commander'
+semver      = require 'semver'
 packageJSON = require './package.json'
 
 Config           = require './src/config'
@@ -21,8 +22,8 @@ class Command
     program.parse process.argv
     repo = program.args[0] || @config.name
 
-    owner = program.owner ? @config.owner
-    tag = program.tag ? @config.version
+    owner = program.owner || @config.owner
+    tag = semver.clean(program.tag) || @config.version
     docker_url = program.dockerUrl
 
     @dieHelp new Error 'Missing repo argument' unless repo?

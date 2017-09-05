@@ -1,8 +1,9 @@
-{ check, isGit }  = require 'git-state'
-simpleGit = require 'simple-git'
-_ = require 'lodash'
-path = require 'path'
-debug = require('debug')('beekeeper-util:git-service')
+{ check, isGit } = require 'git-state'
+simpleGit        = require 'simple-git'
+_                = require 'lodash'
+semver           = require 'semver'
+path             = require 'path'
+debug            = require('debug')('beekeeper-util:git-service')
 
 class GitService
   constructor: ({ config }) ->
@@ -11,19 +12,17 @@ class GitService
     throw new Error "GitService requires projectRoot in config" unless @projectRoot?
 
   check: ({ tag }, callback) =>
+    tag = @_parseTag tag
     isGit @projectRoot, (isGitRepo) =>
       return callback new Error('Must be a git repo') unless isGitRepo
       check @projectRoot, (error, result) =>
         return callback error if error?
         { branch } = result
-        unless branch == 'master'
-          return callback new Error 'Branch must be master'
-        @_git().tags (error, tags) =>
-          return callback error if error?
-          return callback new Error('Tag already exists') if tag in tags.all
-          callback null
+        return callback new Error 'Branch must be master' unless branch == 'master'
+        @_validateTag { tag }, callback
 
   release: ({ authors, message, tag }, callback) =>
+    tag = @_parseTag tag
     git = @_git()
     @_setAuthors git, authors
     message = @_buildMessage { message, tag }
@@ -62,5 +61,14 @@ class GitService
     return "#{tag} #{message}"
 
   _git: () => simpleGit @projectRoot
+
+  _parseTag: (tag) => "v#{semver.valid(tag)}"
+
+  _validateTag: ({ tag }, callback) =>
+    return callback new Error "Invalid tag #{tag}" unless semver.valid tag
+    @_git().tags (error, tags) =>
+      return callback error if error?
+      return callback new Error 'Tag already exists' if tag in tags.all
+      callback null
 
 module.exports = GitService

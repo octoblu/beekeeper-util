@@ -1,6 +1,7 @@
 program     = require 'commander'
 Confirm     = require 'prompt-confirm'
 colors      = require 'colors/safe'
+semver      = require 'semver'
 packageJSON = require './package.json'
 
 BeekeeperService = require './src/beekeeper-service'
@@ -23,9 +24,9 @@ class Command
     tagName = program.args[0]
 
     { prompt } = program
-    repo = program.repo ? @config.name
-    owner = program.owner ? @config.owner
-    tag = program.tag ? @config.version
+    repo = program.repo || @config.name
+    owner = program.owner || @config.owner
+    tag = semver.clean(program.tag) || @config.version
 
     @dieHelp new Error 'Missing tag argument' unless tagName?
     @dieHelp new Error 'Must specify a repo' unless repo?

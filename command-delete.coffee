@@ -1,5 +1,6 @@
 colors      = require 'colors'
 program     = require 'commander'
+semver      = require 'semver'
 packageJSON = require './package.json'
 
 BeekeeperService = require './src/beekeeper-service'
@@ -18,8 +19,8 @@ class Command
   parseOptions: =>
     program.parse process.argv
     repo = program.args[0] || @config.name
-    owner = program.owner ? @config.owner
-    tag = program.tag ? @config.version
+    owner = program.owner || @config.owner
+    tag = semver.clean(program.tag) || @config.version
 
     @dieHelp new Error 'Missing repo' unless repo?
     @dieHelp new Error 'Missing tag' unless tag?

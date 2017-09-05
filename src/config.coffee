@@ -4,6 +4,7 @@ fs           = require 'fs-extra'
 findVersions = require 'find-versions'
 gitTopLevel  = require 'git-toplevel'
 os           = require 'os'
+semver       = require 'semver'
 debug        = require('debug')('beekeeper-util:config')
 
 TYPE_VERSION_FILE={
@@ -66,7 +67,7 @@ class Config
     fileName = _.get TYPE_VERSION_FILE, type
     @_findVersionInFile path.join(projectRoot, fileName), (error, version) =>
       return callback error if error?
-      callback null, _.trimStart version, 'v'
+      callback null, semver.clean version
 
   getProjectRoot: (callback) =>
     gitTopLevel()

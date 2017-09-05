@@ -1,6 +1,7 @@
 _       = require 'lodash'
 colors  = require 'colors'
 program = require 'commander'
+semver  = require 'semver'
 
 GithubService = require './src/github-service.coffee'
 GitService    = require './src/git-service.coffee'
@@ -14,7 +15,14 @@ program
   .usage '[options] <message>'
   .option '-r, --repo <repo-name>', 'Project repo name'
   .option '-o, --owner <octoblu>', 'Project owner'
-  .option '-t, --tag <tag>', 'Project version'
+  .option '-t, --tag <tag>', 'Override project version'
+  .option '--major', 'Bump with semver major version'
+  .option '--premajor', 'Bump with semver premajor version'
+  .option '--minor', 'Bump with semver minor version'
+  .option '--preminor', 'Bump with semver preminor version'
+  .option '--patch', 'Bump with semver patch version. Default version release.'
+  .option '--prepatch', 'Bump with semver prepatch version'
+  .option '--prerelease [preid]', 'Bump with semver prerelease version, value is <tag>-<preid>'
   .option '-a, --authors <authors>', 'a list of authors', list
 
 class Command
@@ -28,15 +36,32 @@ class Command
     message = program.args[0]
     repo = program.repo || @config.name
     owner = program.owner || @config.owner
-    tag = program.tag || @config.version
     authors = _.map program.authors, (initial) => @config.authors[initial]
+    tag = @getNewTag program
     return {
       repo,
       owner,
       tag,
       authors,
-      message
+      message,
     }
+
+  getNewTag: (program) =>
+    return semver.clean program.tag if program.tag
+    tag = @config.version
+    release = @getRelease program
+    preid = program.prerelease
+    return semver.inc(tag, release, preid)
+
+  getRelease: (program) =>
+    return 'major' if program['major']
+    return 'premajor' if program['premajor']
+    return 'minor' if program['minor']
+    return 'preminor' if program['preminor']
+    return 'patch' if program['patch']
+    return 'prepatch' if program['prepatch']
+    return 'prerelease' if program['prerelease']
+    return 'patch'
 
   run: =>
     { authors, message, tag } = @parseOptions()
@@ -44,7 +69,7 @@ class Command
       return @die error if error?
       @gitService.release { authors, message, tag }, (error) =>
         return @die error if error?
-        console.log colors.green('RELEASED!')
+        console.log colors.green("RELEASED"), colors.bold("v#{tag}")
         @die()
 
   dieHelp: (error) =>

@@ -1,4 +1,5 @@
 program     = require 'commander'
+semver      = require 'semver'
 packageJSON = require './package.json'
 
 StatusService    = require './src/status-service'
@@ -23,14 +24,13 @@ class Command
     program.parse process.argv
     {
       json
-      tag
       latest
       serviceUrl
       filter
     } = program
     owner = program.owner ? @config.owner
     repo = program.args[0] || @config.name
-    tag ?= @config.version
+    tag = semver.clean(program.tag) || @config.version
     tag ?= 'latest'
     tag = 'latest' if latest?
 
