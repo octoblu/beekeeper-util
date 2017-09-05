@@ -27,7 +27,7 @@ program
 
 class Command
   constructor: (@config) ->
-    # process.on 'uncaughtException', @die
+    process.on 'uncaughtException', @die
     @githubService = new GithubService { @config }
     @gitService = new GitService { @config }
 
