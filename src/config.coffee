@@ -3,6 +3,7 @@ path         = require 'path'
 fs           = require 'fs-extra'
 findVersions = require 'find-versions'
 gitTopLevel  = require 'git-toplevel'
+os           = require 'os'
 debug        = require('debug')('beekeeper-util:config')
 
 TYPE_VERSION_FILE={
@@ -17,7 +18,7 @@ class Config
   get: (callback) =>
     @getProjectRootAndType (error, { projectRoot, type }={}) =>
       return callback error if error?
-      @getNameAndVersion { projectRoot, type }, (error, { name, version }={}) =>
+      @getProjectInfo { projectRoot, type }, (error, { name, version, authors }={}) =>
         return callback error if error?
         owner = @_getEnv('GITHUB_OWNER', 'octoblu')
         config = {
@@ -25,6 +26,7 @@ class Config
           type,
           name,
           owner,
+          authors,
           version: "v#{version}",
           repo: "#{owner}/#{name}",
           beekeeperUri: @_getEnv 'BEEKEEPER_URI'
@@ -37,16 +39,26 @@ class Config
         debug 'project config', { config }
         callback null, config
 
-  getNameAndVersion: ({ type, projectRoot }, callback) =>
+  getAuthors: (callback) =>
+    filePath = path.join os.homedir(), '.beekeeper-authors.json'
+    @_checkAccess filePath, (error, hasAccess) =>
+      return callback error if error?
+      return callback null, {} unless hasAccess
+      fs.readJson filePath, callback
+
+  getProjectInfo: ({ type, projectRoot }, callback) =>
     @getName { projectRoot, type }, (error, name) =>
       return callback error if error?
       @getVersion { projectRoot, type }, (error, version) =>
         return callback error if error?
-        callback null, { name, version }
+        @getAuthors (error, authors) =>
+          return callback error if error?
+          callback null, { name, version, authors }
 
   getName: ({ type, projectRoot }, callback) =>
     return callback null, path.basename(projectRoot) unless type == 'node'
-    fs.readJSON path.join(projectRoot, 'package.json'), (error, contents) =>
+    filePath = path.join(projectRoot, 'package.json')
+    fs.readJson filePath, (error, contents) =>
       return callback error if error?
       callback null, @_parseName _.get contents, 'name'
 
@@ -106,5 +118,6 @@ class Config
     debug { envStr, defaultValue }
     return process.env[envStr] if process.env[envStr]?
     return defaultValue
+
 
 module.exports = Config
