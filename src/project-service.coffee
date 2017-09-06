@@ -37,11 +37,18 @@ class ProjectService
           return callback error if error?
           @_modifyPackage callback
 
+  initVersionFile: (callback) =>
+    versionFileName = path.basename @versionFile
+    return callback null unless versionFileName == 'VERSION'
+    fs.access @versionFile, fs.constants.F_OK, (error) =>
+      return callback null unless error?
+      @_modifyVersionFile { tag: '1.0.0' }, callback
+
   modifyVersion: ({ tag }, callback) =>
     debug 'modifyVersion', { tag }
-    basename = path.basename @versionFile
-    return @_modifyGoVersionFile { tag }, callback if basename == 'version.go'
-    return @_modifyPackageVersion { tag }, callback if basename == 'package.json'
+    versionFileName = path.basename @versionFile
+    return @_modifyGoVersionFile { tag }, callback if versionFileName == 'version.go'
+    return @_modifyPackageVersion { tag }, callback if versionFileName == 'package.json'
     return @_modifyVersionFile { tag }, callback
 
   _modifyPackageVersion: ({ tag }, callback) =>

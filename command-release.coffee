@@ -72,6 +72,7 @@ class Command
     { authors, message, tag, owner, repo } = @parseOptions()
     async.series [
       async.apply @gitService.check, { tag }
+      async.apply @projectService.initVersionFile
       async.apply @projectService.modifyVersion, { tag }
       async.apply @gitService.release, { authors, message, tag }
       async.apply @beekeeperService.create, { owner, repo, tag }

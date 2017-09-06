@@ -67,6 +67,7 @@ class Config
   getVersion: ({ versionFile }, callback) =>
     @_findVersionInFile versionFile, (error, version) =>
       return callback error if error?
+      return callback null, '1.0.0' unless semver.valid version
       callback null, semver.clean version
 
   getProjectRoot: (callback) =>

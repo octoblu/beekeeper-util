@@ -51,6 +51,7 @@ class Command
         async.apply @codecovService.configure, { @repo, @owner, @isPrivate }
         async.apply @codecovService.configureEnv, { @repo, @owner, @isPrivate }
         async.apply @projectService.configure, { @isPrivate }
+        async.apply @projectService.initVersionFile
         async.apply @quayService.configure, { @repo, @owner, @isPrivate }
         async.apply @dockerHubService.configure, { @repo, @owner, @isPrivate }
         async.apply @codefreshService.configure, { @repo, @owner, @isPrivate }
