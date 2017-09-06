@@ -68,6 +68,7 @@ class GitService
     return callback new Error "Invalid tag #{tag}" unless semver.valid tag
     @_git().tags (error, tags) =>
       return callback error if error?
+      debug 'found tags', tags
       return callback new Error 'Tag already exists' if tag in tags.all
       callback null
 

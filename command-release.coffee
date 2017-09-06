@@ -52,7 +52,7 @@ class Command
     }
 
   getNewTag: (program) =>
-    return semver.clean program.tag if program.tag
+    return semver.valid program.tag if semver.valid program.tag
     tag = @config.version
     release = @getRelease program
     preid = program.prerelease

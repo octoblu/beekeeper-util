@@ -26,7 +26,7 @@ class Command
     { prompt } = program
     repo = program.repo || @config.name
     owner = program.owner || @config.owner
-    tag = semver.clean(program.tag) || @config.version
+    tag = semver.valid(program.tag) || @config.version
 
     @dieHelp new Error 'Missing tag argument' unless tagName?
     @dieHelp new Error 'Must specify a repo' unless repo?

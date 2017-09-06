@@ -7,7 +7,7 @@ os           = require 'os'
 semver       = require 'semver'
 debug        = require('debug')('beekeeper-util:config')
 
-TYPE_VERSION_FILE={
+VERSION_FILE_NAMES={
   golang: 'version.go'
   node: 'package.json'
   generic: 'VERSION'
@@ -17,9 +17,9 @@ class Config
   constructor: ->
 
   get: (callback) =>
-    @getProjectRootAndType (error, { projectRoot, type }={}) =>
+    @getProjectRootAndType (error, { projectRoot, type, versionFile }={}) =>
       return callback error if error?
-      @getProjectInfo { projectRoot, type }, (error, { name, version, authors }={}) =>
+      @getProjectInfo { projectRoot, type, versionFile }, (error, { name, version, authors }={}) =>
         return callback error if error?
         owner = @_getEnv('GITHUB_OWNER', 'octoblu')
         config = {
@@ -28,7 +28,8 @@ class Config
           name,
           owner,
           authors,
-          version: "v#{version}",
+          version,
+          versionFile,
           repo: "#{owner}/#{name}",
           beekeeperUri: @_getEnv 'BEEKEEPER_URI'
           codecovToken: @_getEnv 'CODECOV_TOKEN'
@@ -47,10 +48,10 @@ class Config
       return callback null, {} unless hasAccess
       fs.readJson filePath, callback
 
-  getProjectInfo: ({ type, projectRoot }, callback) =>
+  getProjectInfo: ({ type, projectRoot, versionFile }, callback) =>
     @getName { projectRoot, type }, (error, name) =>
       return callback error if error?
-      @getVersion { projectRoot, type }, (error, version) =>
+      @getVersion { versionFile }, (error, version) =>
         return callback error if error?
         @getAuthors (error, authors) =>
           return callback error if error?
@@ -63,9 +64,8 @@ class Config
       return callback error if error?
       callback null, @_parseName _.get contents, 'name'
 
-  getVersion: ({ projectRoot, type }, callback) =>
-    fileName = _.get TYPE_VERSION_FILE, type
-    @_findVersionInFile path.join(projectRoot, fileName), (error, version) =>
+  getVersion: ({ versionFile }, callback) =>
+    @_findVersionInFile versionFile, (error, version) =>
       return callback error if error?
       callback null, semver.clean version
 
@@ -79,21 +79,54 @@ class Config
   getProjectRootAndType: (callback) =>
     @getProjectRoot (error, projectRoot) =>
       return callback error if error?
-      @getProjectType projectRoot, (error, type) =>
+      @getProjectType projectRoot, (error, { versionFile, type }={}) =>
         return callback error if error?
-        callback null, { projectRoot, type }
+        callback null, { projectRoot, versionFile, type }
 
   getProjectType: (projectRoot, callback) =>
-    @_checkAccess path.join(projectRoot, 'package.json'), (error, hasAccess) =>
+    @_nodeProjectInfo projectRoot, (error, info) =>
       return callback error if error?
-      return callback null, 'node' if hasAccess
-      @_checkAccess path.join(projectRoot, 'version.go'), (error, hasAccess) =>
+      return callback null, info if info?
+      @_golangProjectInfo projectRoot, (error, info) =>
         return callback error if error?
-        return callback null, 'golang' if hasAccess
-        @_checkAccess path.join(projectRoot, 'main.go'), (error, hasAccess) =>
-          return callback error if error?
-          return callback null, 'golang' if hasAccess
-          callback null, 'generic'
+        return callback null, info if info?
+        @_genericProjectInfo projectRoot, callback
+
+  _getVersionFile: (projectRoot, type) =>
+    return path.join(projectRoot, 'package.json') if type == 'node'
+    return path.join(projectRoot, 'version.go') if type == 'golang'
+    return path.join(projectRoot, 'VERSION')
+
+  _nodeProjectInfo: (projectRoot, callback) =>
+    @_checkAccess @_getVersionFile(projectRoot, 'node'), (error, hasAccess) =>
+      return callback error if error?
+      return callback null unless hasAccess
+      return callback null, {
+        type: 'node',
+        versionFile:  path.join(projectRoot, VERSION_FILE_NAMES['node'])
+      }
+
+  _genericProjectInfo: (projectRoot, callback) =>
+    return callback null, {
+      type: 'generic',
+      versionFile:  path.join(projectRoot, VERSION_FILE_NAMES['generic'])
+    }
+
+  _golangProjectInfo: (projectRoot, callback) =>
+    @_checkAccess path.join(projectRoot, 'version.go'), (error, hasAccess) =>
+      return callback error if error?
+      if hasAccess
+        return callback null, {
+          type: 'golang',
+          versionFile: path.join(projectRoot, VERSION_FILE_NAMES['golang'])
+        }
+      @_checkAccess path.join(projectRoot, 'main.go'), (error, hasAccess) =>
+        return callback error if error?
+        return callback null unless hasAccess
+        return callback null, {
+          type: 'golang',
+          versionFile: path.join(projectRoot, VERSION_FILE_NAMES['generic'])
+        }
 
   _checkAccess: (filePath, callback) =>
     fs.access filePath, fs.constants.R_OK, (error) =>

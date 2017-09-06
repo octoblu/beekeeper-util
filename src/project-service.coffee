@@ -3,16 +3,19 @@ path   = require 'path'
 url    = require 'url'
 yaml   = require 'node-yaml'
 colors = require 'colors'
-fs     = require 'fs'
+fs     = require 'fs-extra'
+semver = require 'semver'
+semverRegex = require 'semver-regex'
 debug  = require('debug')('beekeeper-util:project-service')
 
 class ProjectService
   constructor: ({ config }) ->
     throw new Error 'Missing config argument' unless config?
-    { beekeeperUri, projectRoot, @type } = config
+    { beekeeperUri, projectRoot, @type, @versionFile } = config
     throw new Error 'Missing beekeeperUri in config' unless beekeeperUri?
     throw new Error 'Missing projectRoot in config' unless projectRoot?
     throw new Error 'Missing type in config' unless @type?
+    throw new Error 'Missing versionFile in config' unless @versionFile?
     @travisYml = path.join projectRoot, '.travis.yml'
     @packagePath = path.join projectRoot, 'package.json'
     @dockerFilePath = path.join projectRoot, 'Dockerfile'
@@ -34,20 +37,30 @@ class ProjectService
           return callback error if error?
           @_modifyPackage callback
 
-  modifyVersion: ({ tag, type }, callback) =>
+  modifyVersion: ({ tag }, callback) =>
+    debug 'modifyVersion', { tag }
+    basename = path.basename @versionFile
+    return @_modifyGoVersionFile { tag }, callback if basename == 'version.go'
+    return @_modifyPackageVersion { tag }, callback if basename == 'package.json'
+    return @_modifyVersionFile { tag }, callback
 
   _modifyPackageVersion: ({ tag }, callback) =>
-    packageJSON = @_getPackage()
+    packageJSON = fs.readJsonSync @packagePath
+    packageJSON.version = semver.clean tag
+    fs.writeJson @packagePath, packageJSON, callback
 
-  _getPackage: =>
-    try
-      return _.cloneDeep require @packagePath
-    catch error
-      debug 'package.json require error', error
+  _modifyVersionFile: ({ tag }, callback) =>
+    fs.writeFile @versionFile, tag, callback
+
+  _modifyGoVersionFile: ({ tag }, callback) =>
+    fs.readFile @versionFile, 'utf8', (error, contents) =>
+      return callback error if error?
+      contents = _.replace(contents, semverRegex(), tag)
+      fs.writeFile @versionFile, contents, callback
 
   _modifyPackage: (callback) =>
     return callback() unless @type == 'node'
-    packageJSON = @_getPackage()
+    packageJSON = fs.readJsonSync @packagePath
     orgPackage = _.cloneDeep packageJSON
     packageJSON.scripts ?= {}
     packageJSON.scripts['test'] ?= 'mocha'
@@ -72,8 +85,7 @@ class ProjectService
     }
     return callback null if _.isEqual packageJSON, orgPackage
     console.log colors.magenta('NOTICE'), colors.white('modifying package.json - make sure you run npm install')
-    packageStr = JSON.stringify(packageJSON, null, 2)
-    fs.writeFile @packagePath, "#{packageStr}\n", callback
+    fs.writeJson @packagePath, packageJSON, callback
 
   _modifyTravis: ({ isPrivate }, callback) =>
     yaml.read @travisYml, (error, data) =>
@@ -97,15 +109,13 @@ class ProjectService
       yaml.write @travisYml, data, callback
 
   _modifyDockerfile: (callback) =>
-    @_getFile @dockerFilePath, (error, contents) =>
-      return callback error if error?
-      if _.includes contents, 'FROM node'
-        console.log colors.magenta('NOTICE'), colors.white('use an octoblu base image in your Dockerfile')
-        console.log '  ', colors.cyan('Web Service:'), colors.white('`FROM octoblu/node:7-webservice-onbuild`')
-        console.log '  ', colors.cyan('Worker:     '), colors.white('`FROM octoblu/node:7-worker-onbuild`')
-        console.log '  ', colors.cyan('Static Site:'), colors.white('`FROM octoblu/node:7-staticsite-onbuild`')
-        console.log '  ', colors.cyan('Other:      '), colors.white('`FROM octoblu/node:7-alpine-gyp`')
-      callback null
+    return callback null unless @type == 'node'
+    console.log colors.magenta('NOTICE'), colors.white('use an octoblu base image in your Dockerfile')
+    console.log '  ', colors.cyan('Web Service:'), colors.white('`FROM octoblu/node:7-webservice-onbuild`')
+    console.log '  ', colors.cyan('Worker:     '), colors.white('`FROM octoblu/node:7-worker-onbuild`')
+    console.log '  ', colors.cyan('Static Site:'), colors.white('`FROM octoblu/node:7-staticsite-onbuild`')
+    console.log '  ', colors.cyan('Other:      '), colors.white('`FROM octoblu/node:7-alpine-gyp`')
+    callback null
 
   _modifyDockerignore: (callback) =>
     @_getFile @dockerignorePath, (error, contents) =>

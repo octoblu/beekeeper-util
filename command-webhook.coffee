@@ -23,7 +23,7 @@ class Command
 
     { type } = program
     owner = program.owner || @config.owner
-    tag = semver.clean(program.tag) || @config.version
+    tag = semver.valid(program.tag) || @config.version
     ci_passing = program.ciPassing
 
     @dieHelp new Error 'Missing repo argument' unless repo?

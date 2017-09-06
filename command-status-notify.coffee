@@ -30,7 +30,7 @@ class Command
     } = program
     owner = program.owner ? @config.owner
     repo = program.args[0] || @config.name
-    tag = semver.clean(program.tag) || @config.version
+    tag = semver.valid(program.tag) || @config.version
     tag ?= 'latest'
     tag = 'latest' if latest?
 
