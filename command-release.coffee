@@ -19,6 +19,7 @@ program
   .option '-r, --repo <repo-name>', 'Project repo name'
   .option '-o, --owner <octoblu>', 'Project owner'
   .option '-t, --tag <tag>', 'Override project version'
+  .option '--init', 'Set version 1.0.0'
   .option '--major', 'Bump with semver major version'
   .option '--premajor', 'Bump with semver premajor version'
   .option '--minor', 'Bump with semver minor version'
@@ -55,10 +56,12 @@ class Command
     return semver.valid program.tag if semver.valid program.tag
     tag = @config.version
     release = @getRelease program
+    return '1.0.0' if release == 'init'
     preid = program.prerelease
     return semver.inc(tag, release, preid)
 
   getRelease: (program) =>
+    return 'init' if program['init']
     return 'major' if program['major']
     return 'premajor' if program['premajor']
     return 'minor' if program['minor']
