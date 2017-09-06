@@ -11,15 +11,16 @@ debug  = require('debug')('beekeeper-util:project-service')
 class ProjectService
   constructor: ({ config }) ->
     throw new Error 'Missing config argument' unless config?
-    { beekeeperUri, projectRoot, @type, @versionFile } = config
+    { beekeeperUri, projectRoot, @type, @versionFileName } = config
     throw new Error 'Missing beekeeperUri in config' unless beekeeperUri?
     throw new Error 'Missing projectRoot in config' unless projectRoot?
     throw new Error 'Missing type in config' unless @type?
-    throw new Error 'Missing versionFile in config' unless @versionFile?
+    throw new Error 'Missing versionFileName in config' unless @versionFileName?
     @travisYml = path.join projectRoot, '.travis.yml'
     @packagePath = path.join projectRoot, 'package.json'
     @dockerFilePath = path.join projectRoot, 'Dockerfile'
     @dockerignorePath = path.join projectRoot, '.dockerignore'
+    @versionFile = path.join projectRoot, @versionFileName
     urlParts = url.parse beekeeperUri
     _.set urlParts, 'slashes', true
     delete urlParts.auth
@@ -38,32 +39,23 @@ class ProjectService
           @_modifyPackage callback
 
   initVersionFile: (callback) =>
-    versionFileName = path.basename @versionFile
-    return callback null unless versionFileName == 'VERSION'
+    return callback null unless @versionFileName == 'VERSION'
     fs.access @versionFile, fs.constants.F_OK, (error) =>
       return callback null unless error?
-      @_modifyVersionFile { tag: '1.0.0' }, callback
+      @modifyVersion { tag: '1.0.0' }, callback
 
   modifyVersion: ({ tag }, callback) =>
-    debug 'modifyVersion', { tag }
-    versionFileName = path.basename @versionFile
-    return @_modifyGoVersionFile { tag }, callback if versionFileName == 'version.go'
-    return @_modifyPackageVersion { tag }, callback if versionFileName == 'package.json'
-    return @_modifyVersionFile { tag }, callback
-
-  _modifyPackageVersion: ({ tag }, callback) =>
-    packageJSON = fs.readJsonSync @packagePath
-    packageJSON.version = semver.clean tag
-    fs.writeJson @packagePath, packageJSON, { spaces: 2 }, callback
-
-  _modifyVersionFile: ({ tag }, callback) =>
-    fs.writeFile @versionFile, tag, callback
-
-  _modifyGoVersionFile: ({ tag }, callback) =>
+    version = semver.clean(tag)
+    debug 'modifyVersion', { tag, version }
     fs.readFile @versionFile, 'utf8', (error, contents) =>
       return callback error if error?
-      contents = _.replace(contents, semverRegex(), tag)
-      fs.writeFile @versionFile, contents, callback
+      try
+        jsonContents = JSON.parse contents
+        _.set jsonContents, 'version', version
+        newContents = JSON.stringify jsonContents, null, 2
+      catch
+        newContents = _.replace contents, semverRegex(), version
+      fs.writeFile @versionFile, newContents, callback
 
   _modifyPackage: (callback) =>
     return callback() unless @type == 'node'

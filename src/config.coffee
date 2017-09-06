@@ -3,71 +3,47 @@ path         = require 'path'
 fs           = require 'fs-extra'
 findVersions = require 'find-versions'
 gitTopLevel  = require 'git-toplevel'
-os           = require 'os'
 semver       = require 'semver'
+walkBack     = require 'walk-back'
 debug        = require('debug')('beekeeper-util:config')
 
-VERSION_FILE_NAMES={
-  golang: 'version.go'
-  node: 'package.json'
-  generic: 'VERSION'
-}
-
 class Config
-  constructor: ->
+  constructor: () ->
+    @initConfig()
+
+  initConfig: =>
+    beekeeperConfigPath = walkBack '.', '.beekeeper_global.json'
+    return unless beekeeperConfigPath?
+    @beekeeperConfig = fs.readJsonSync beekeeperConfigPath
 
   get: (callback) =>
-    @getProjectRootAndType (error, { projectRoot, type, versionFile }={}) =>
+    @getCoreProjectInfo (error, coreProjectInfo) =>
       return callback error if error?
-      @getProjectInfo { projectRoot, type, versionFile }, (error, { name, version, authors }={}) =>
+      @getProjectInfo coreProjectInfo, (error, config) =>
         return callback error if error?
-        owner = @_getEnv('GITHUB_OWNER', 'octoblu')
-        config = {
-          projectRoot,
-          type,
-          name,
-          owner,
-          authors,
-          version,
-          versionFile,
-          repo: "#{owner}/#{name}",
-          beekeeperUri: @_getEnv 'BEEKEEPER_URI'
-          codecovToken: @_getEnv 'CODECOV_TOKEN'
-          githubToken: @_getEnv 'GITHUB_TOKEN'
-          codefreshToken: @_getEnv 'CODEFRESH_TOKEN'
-          quayToken: @_getEnv 'QUAY_TOKEN'
-          dockerHubToken: @_getEnv 'DOCKER_HUB_LOGIN_TOKEN'
-        }
         debug 'project config', { config }
         callback null, config
 
-  getAuthors: (callback) =>
-    filePath = path.join os.homedir(), '.beekeeper-authors.json'
-    @_checkAccess filePath, (error, hasAccess) =>
+  getProjectInfo: (coreProjectInfo, callback) =>
+    { type, projectRoot, owner } = coreProjectInfo
+    @getProjectName { projectRoot, type }, (error, name) =>
       return callback error if error?
-      return callback null, {} unless hasAccess
-      fs.readJson filePath, callback
+      callback null, _.assign coreProjectInfo, {
+        repo: "#{owner}/#{name}"
+        name
+      }
 
-  getProjectInfo: ({ type, projectRoot, versionFile }, callback) =>
-    @getName { projectRoot, type }, (error, name) =>
-      return callback error if error?
-      @getVersion { versionFile }, (error, version) =>
-        return callback error if error?
-        @getAuthors (error, authors) =>
-          return callback error if error?
-          callback null, { name, version, authors }
-
-  getName: ({ type, projectRoot }, callback) =>
+  getProjectName: ({ type, projectRoot }, callback) =>
     return callback null, path.basename(projectRoot) unless type == 'node'
     filePath = path.join(projectRoot, 'package.json')
     fs.readJson filePath, (error, contents) =>
       return callback error if error?
       callback null, @_parseName _.get contents, 'name'
 
-  getVersion: ({ versionFile }, callback) =>
-    @_findVersionInFile versionFile, (error, version) =>
+  getVersion: ({ versionFileName, projectRoot }, callback) =>
+    @_findVersionInFile path.join(projectRoot, versionFileName), (error, version) =>
       return callback error if error?
-      return callback null, '1.0.0' unless semver.valid version
+      return callback null unless semver.valid version
       callback null, semver.clean version
 
   getProjectRoot: (callback) =>
@@ -77,12 +53,42 @@ class Config
       .catch (error) =>
         callback error
 
-  getProjectRootAndType: (callback) =>
+  getCoreProjectInfo: (callback) =>
     @getProjectRoot (error, projectRoot) =>
       return callback error if error?
-      @getProjectType projectRoot, (error, { versionFile, type }={}) =>
+      @getProjectConfig projectRoot, (error, projectConfig) =>
         return callback error if error?
-        callback null, { projectRoot, versionFile, type }
+        @getProjectType projectRoot, (error, projectType) =>
+          return callback error if error?
+          { versionFileName, type } = projectType
+          @getVersion { versionFileName, projectRoot }, (error, version) =>
+            return callback error if error?
+            coreInfo = {
+              authors: @_getConfigValue projectConfig, 'authors'
+              beekeeperUri:  @_getConfigValue projectConfig, 'uri'
+              codecovToken:  @_getConfigValue projectConfig, 'codecov.token'
+              githubToken:  @_getConfigValue projectConfig, 'github.token'
+              codefreshToken:  @_getConfigValue projectConfig, 'codefresh.token'
+              quayToken:  @_getConfigValue projectConfig, 'quay.token'
+              dockerHubToken:  @_getConfigValue projectConfig, 'dockerHub.token'
+              dockerHubUsername:  @_getConfigValue projectConfig, 'dockerHub.username'
+              dockerHubPassword:  @_getConfigValue projectConfig, 'dockerHub.password'
+              projectRoot: @_getProjectConfigValue projectConfig, 'project.root', projectRoot
+              repo: @_getProjectConfigValue projectConfig, 'project.repo'
+              name: @_getProjectConfigValue projectConfig, 'project.name'
+              owner:  @_getConfigValue projectConfig, 'project.owner', 'octoblu'
+              type:  @_getConfigValue projectConfig, 'project.type', type || 'generic'
+              versionFileName:  @_getConfigValue projectConfig, 'project.versionFileName', versionFileName || 'VERSION'
+              version:  @_getConfigValue projectConfig, 'project.version', version || '1.0.0'
+            }
+            callback null, coreInfo
+
+  getProjectConfig: (projectRoot, callback) =>
+    configFile = path.join(projectRoot, '.beekeeper.json')
+    @_checkAccess configFile, (error, hasAccess) =>
+      return callback error if error?
+      return callback null unless hasAccess
+      fs.readJson configFile, callback
 
   getProjectType: (projectRoot, callback) =>
     @_nodeProjectInfo projectRoot, (error, info) =>
@@ -93,25 +99,14 @@ class Config
         return callback null, info if info?
         @_genericProjectInfo projectRoot, callback
 
-  _getVersionFile: (projectRoot, type) =>
-    return path.join(projectRoot, 'package.json') if type == 'node'
-    return path.join(projectRoot, 'version.go') if type == 'golang'
-    return path.join(projectRoot, 'VERSION')
-
   _nodeProjectInfo: (projectRoot, callback) =>
-    @_checkAccess @_getVersionFile(projectRoot, 'node'), (error, hasAccess) =>
+    @_checkAccess path.join(projectRoot, 'package.json'), (error, hasAccess) =>
       return callback error if error?
       return callback null unless hasAccess
       return callback null, {
         type: 'node',
-        versionFile:  path.join(projectRoot, VERSION_FILE_NAMES['node'])
+        versionFileName: 'package.json'
       }
-
-  _genericProjectInfo: (projectRoot, callback) =>
-    return callback null, {
-      type: 'generic',
-      versionFile:  path.join(projectRoot, VERSION_FILE_NAMES['generic'])
-    }
 
   _golangProjectInfo: (projectRoot, callback) =>
     @_checkAccess path.join(projectRoot, 'version.go'), (error, hasAccess) =>
@@ -119,18 +114,18 @@ class Config
       if hasAccess
         return callback null, {
           type: 'golang',
-          versionFile: path.join(projectRoot, VERSION_FILE_NAMES['golang'])
+          versionFileName: 'version.go'
         }
       @_checkAccess path.join(projectRoot, 'main.go'), (error, hasAccess) =>
         return callback error if error?
         return callback null unless hasAccess
         return callback null, {
           type: 'golang',
-          versionFile: path.join(projectRoot, VERSION_FILE_NAMES['generic'])
+          versionFileName: 'VERSION'
         }
 
   _checkAccess: (filePath, callback) =>
-    fs.access filePath, fs.constants.R_OK, (error) =>
+    fs.access filePath, fs.constants.F_OK | fs.constants.R_OK, (error) =>
       callback null, !error?
 
   _findVersionInFile: (filePath, callback) =>
@@ -147,12 +142,16 @@ class Config
 
   _parseName: (name) => _.last _.split(name, '/')
 
-  _getEnv: (envStr, defaultValue) =>
-    envStr = _.toUpper envStr
-    envStr = "BEEKEEPER_#{envStr}" if process.env["BEEKEEPER_#{envStr}"]?
-    debug { envStr, defaultValue }
-    return process.env[envStr] if process.env[envStr]?
-    return defaultValue
+  _getConfigValue: (projectConfig, configKey, defaultValue) =>
+    envStr = _.toUpper _.snakeCase configKey
+    envValue = process.env["BEEKEEPER_#{envStr}"] || process.env[envStr]
+    configValue = _.get projectConfig, configKey
+    globalConfigValue = _.get @beekeeperConfig, configKey
+    debug { envStr, defaultValue, envValue, configKey, configValue, globalConfigValue }
+    return globalConfigValue ? configValue ? envValue ? defaultValue
 
+  _getProjectConfigValue: (projectConfig, configKey, defaultValue) =>
+    configValue = _.get projectConfig, configKey
+    return configValue ? defaultValue
 
 module.exports = Config

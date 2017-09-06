@@ -2,7 +2,6 @@ program     = require 'commander'
 semver      = require 'semver'
 packageJSON = require './package.json'
 
-Config           = require './src/config'
 BeekeeperService = require './src/beekeeper-service'
 
 program
@@ -13,9 +12,8 @@ program
   .option '-o, --owner <octoblu>', 'Project owner'
 
 class Command
-  constructor: ->
+  constructor: (@config) ->
     process.on 'uncaughtException', @die
-    @config = new Config()
     @beekeeperService = new BeekeeperService { @config }
 
   parseOptions: =>

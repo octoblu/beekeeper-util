@@ -56,7 +56,8 @@
     "request": "^2.81.0",
     "semver": "^5.4.1",
     "semver-regex": "^1.0.0",
-    "simple-git": "^1.76.0"
+    "simple-git": "^1.76.0",
+    "walk-back": "^3.0.0"
   },
   "devDependencies": {
     "chai": "^4.0.2",

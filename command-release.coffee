@@ -91,7 +91,7 @@ class Command
 
   die: (error) =>
     return process.exit(0) unless error?
-    console.error error.toString()
+    console.error error.toString(), error.stack
     process.exit 1
 
 module.exports = Command
