@@ -9,32 +9,18 @@ class BeekeeperService
     throw new Error 'Missing beekeeperUri in config' unless @beekeeperUri?
     debug 'using beekeeperUri', { @beekeeperUri }
 
-  getTag: ({ owner, repo, tag, filter }, callback) =>
-    @_getTag { owner, repo, tag, filter }, (error, deployment) =>
-      return callback error if error?
-      return callback null, deployment, deployment if tag == 'latest'
-      @_getTag { owner, repo, tag: 'latest', filter }, (error, latest) =>
-        return callback error if error?
-        if deployment?.tag == latest?.tag
-          return callback null, latest, latest
-        callback null, deployment, latest
-
-  _getTag: ({ owner, repo, tag, filter }, callback) =>
+  create: ({ owner, repo, tag }, callback) =>
     options =
       baseUrl: @beekeeperUri
       uri: "/deployments/#{owner}/#{repo}/#{tag}"
       json: true
-      qs:
-        tags: filter
-    debug 'get tag options', options
-    request.get options, (error, response, body) =>
-      debug 'got tag', { body, error }
+    debug 'create options', options
+    request.post options, (error, response, body) =>
       return callback error if error?
-      if response.statusCode > 499
-        return callback new Error 'Fatal error from beekeeper service'
-      if response.statusCode == 404
-        return callback null
-      callback null, body
+      if response.statusCode > 399
+        message = _.get body, 'error', 'Error from beekeeper service'
+        return callback new Error message
+      callback()
 
   delete: ({ owner, repo, tag }, callback) =>
     options =
@@ -48,18 +34,15 @@ class BeekeeperService
         return callback new Error 'Fatal error from beekeeper service'
       callback()
 
-  update: ({ owner, repo, tag, docker_url }, callback) =>
-    options =
-      baseUrl: @beekeeperUri
-      uri: "/deployments/#{owner}/#{repo}/#{tag}"
-      json: { docker_url }
-    debug 'update options', options
-    request.patch options, (error, response, body) =>
+  getTag: ({ owner, repo, tag, filter }, callback) =>
+    @_getTag { owner, repo, tag, filter }, (error, deployment) =>
       return callback error if error?
-      if response.statusCode > 399
-        message = _.get body, 'error', 'Error from beekeeper service'
-        return callback new Error message
-      callback()
+      return callback null, deployment, deployment if tag == 'latest'
+      @_getTag { owner, repo, tag: 'latest', filter }, (error, latest) =>
+        return callback error if error?
+        if deployment?.tag == latest?.tag
+          return callback null, latest, latest
+        callback null, deployment, latest
 
   tagDeployment: ({ owner, repo, tag, tagName }, callback) =>
     options =
@@ -75,6 +58,19 @@ class BeekeeperService
         return callback new Error message
       callback()
 
+  update: ({ owner, repo, tag, docker_url }, callback) =>
+    options =
+      baseUrl: @beekeeperUri
+      uri: "/deployments/#{owner}/#{repo}/#{tag}"
+      json: { docker_url }
+    debug 'update options', options
+    request.patch options, (error, response, body) =>
+      return callback error if error?
+      if response.statusCode > 399
+        message = _.get body, 'error', 'Error from beekeeper service'
+        return callback new Error message
+      callback()
+
   webhook: ({ owner, repo, tag, ci_passing, type }, callback) =>
     options =
       baseUrl: @beekeeperUri
@@ -87,5 +83,21 @@ class BeekeeperService
         message = _.get body, 'error', 'Error from beekeeper service'
         return callback new Error message
       callback()
+
+  _getTag: ({ owner, repo, tag, filter }, callback) =>
+    options =
+      baseUrl: @beekeeperUri
+      uri: "/deployments/#{owner}/#{repo}/#{tag}"
+      json: true
+      qs: { tags: filter }
+    debug 'get tag options', options
+    request.get options, (error, response, body) =>
+      debug 'got tag', { body, error }
+      return callback error if error?
+      if response.statusCode > 499
+        return callback new Error 'Fatal error from beekeeper service'
+      if response.statusCode == 404
+        return callback null
+      callback null, body
 
 module.exports = BeekeeperService

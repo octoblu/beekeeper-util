@@ -2,9 +2,12 @@ _       = require 'lodash'
 colors  = require 'colors'
 program = require 'commander'
 semver  = require 'semver'
+async   = require 'async'
 
-GithubService = require './src/github-service.coffee'
-GitService    = require './src/git-service.coffee'
+GithubService    = require './src/github-service.coffee'
+GitService       = require './src/git-service.coffee'
+BeekeeperService = require './src/beekeeper-service.coffee'
+ProjectService   = require './src/project-service.coffee'
 
 packageJSON   = require './package.json'
 
@@ -30,6 +33,8 @@ class Command
     process.on 'uncaughtException', @die
     @githubService = new GithubService { @config }
     @gitService = new GitService { @config }
+    @beekeeperService = new BeekeeperService { @config }
+    @projectService = new ProjectService { @config }
 
   parseOptions: =>
     program.parse process.argv
@@ -64,13 +69,16 @@ class Command
     return 'patch'
 
   run: =>
-    { authors, message, tag } = @parseOptions()
-    @gitService.check { tag }, (error) =>
+    { authors, message, tag, owner, repo } = @parseOptions()
+    async.series [
+      async.apply @gitService.check, { tag }
+      async.apply @projectService.modifyVersion, { tag }
+      async.apply @gitService.release, { authors, message, tag }
+      async.apply @beekeeperService.create, { owner, repo, tag }
+    ], (error) =>
       return @die error if error?
-      @gitService.release { authors, message, tag }, (error) =>
-        return @die error if error?
-        console.log colors.green("RELEASED"), colors.bold("v#{tag}")
-        @die()
+      console.log colors.green("RELEASED"), colors.bold("v#{tag}")
+      @die()
 
   dieHelp: (error) =>
     console.error error.toString()

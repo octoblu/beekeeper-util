@@ -9,9 +9,10 @@ debug  = require('debug')('beekeeper-util:project-service')
 class ProjectService
   constructor: ({ config }) ->
     throw new Error 'Missing config argument' unless config?
-    { beekeeperUri, projectRoot } = config
-    throw new Error 'Missing beekeeperUri in config' unless @beekeeperUri?
-    throw new Error 'Missing projectRoot in config' unless @projectRoot?
+    { beekeeperUri, projectRoot, @type } = config
+    throw new Error 'Missing beekeeperUri in config' unless beekeeperUri?
+    throw new Error 'Missing projectRoot in config' unless projectRoot?
+    throw new Error 'Missing type in config' unless @type?
     @travisYml = path.join projectRoot, '.travis.yml'
     @packagePath = path.join projectRoot, 'package.json'
     @dockerFilePath = path.join projectRoot, 'Dockerfile'
@@ -33,6 +34,11 @@ class ProjectService
           return callback error if error?
           @_modifyPackage callback
 
+  modifyVersion: ({ tag, type }, callback) =>
+
+  _modifyPackageVersion: ({ tag }, callback) =>
+    packageJSON = @_getPackage()
+
   _getPackage: =>
     try
       return _.cloneDeep require @packagePath
@@ -40,8 +46,8 @@ class ProjectService
       debug 'package.json require error', error
 
   _modifyPackage: (callback) =>
+    return callback() unless @type == 'node'
     packageJSON = @_getPackage()
-    return callback() unless packageJSON?
     orgPackage = _.cloneDeep packageJSON
     packageJSON.scripts ?= {}
     packageJSON.scripts['test'] ?= 'mocha'
