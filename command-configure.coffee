@@ -43,9 +43,7 @@ class Command
   run: =>
     @githubService.getRepo { @repo, @owner }, (error, githubRepo) =>
       return @die error if error?
-
       @isPrivate = githubRepo.private
-
       async.series [
         async.apply @travisService.configure, { @repo, @owner, @isPrivate }
         async.apply @codecovService.configure, { @repo, @owner, @isPrivate }

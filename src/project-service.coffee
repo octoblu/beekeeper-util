@@ -54,7 +54,7 @@ class ProjectService
   _modifyPackageVersion: ({ tag }, callback) =>
     packageJSON = fs.readJsonSync @packagePath
     packageJSON.version = semver.clean tag
-    fs.writeJson @packagePath, packageJSON, callback
+    fs.writeJson @packagePath, packageJSON, { spaces: 2 }, callback
 
   _modifyVersionFile: ({ tag }, callback) =>
     fs.writeFile @versionFile, tag, callback
@@ -92,36 +92,62 @@ class ProjectService
     }
     return callback null if _.isEqual packageJSON, orgPackage
     console.log colors.magenta('NOTICE'), colors.white('modifying package.json - make sure you run npm install')
-    fs.writeJson @packagePath, packageJSON, callback
+    fs.writeJson @packagePath, packageJSON, { spaces: 2 }, callback
+
+  _defaultTravisFile: () =>
+    if @type == 'node'
+      return {
+        language: 'node_js'
+        node_js: ['8']
+        branches:
+          only: ["/^v[0-9]/"]
+      }
+    if @type == 'golang'
+      return {
+        language: 'go'
+        go: ['1.9']
+        branches:
+          only: ["/^v[0-9]/"]
+      }
+    return { }
+
+  _initTravisIfNeed: (callback) =>
+    fs.access @travisYml, fs.constants.F_OK | fs.constants.W_OK, (error) =>
+      return callback null unless error?
+      console.log colors.magenta('NOTICE'), colors.white('creating .travis.yml')
+      yaml.write @travisYml, @_defaultTravisFile(), callback
 
   _modifyTravis: ({ isPrivate }, callback) =>
-    yaml.read @travisYml, (error, data) =>
+    @_initTravisIfNeed (error) =>
       return callback error if error?
-      return callback new Error('Missing .travis.yml') unless data?
-      orgData = _.cloneDeep data
-      type = 'pro' if isPrivate
-      type ?= 'org'
-      _.set data, 'notifications.webhooks', [@webhookUrl]
-      data.after_success ?= []
-      after_success = [
-        'npm run coverage'
-        'npm run mocha:json'
-        'bash <(curl -s https://codecov.io/bash)'
-        'bash <(curl -s https://codecov.octoblu.com/bash)'
-      ]
-      _.pullAll data.after_success, after_success
-      data.after_success = _.concat data.after_success, after_success
-      return callback null if _.isEqual orgData, data
-      console.log colors.magenta('NOTICE'), colors.white('modifying .travis.yml')
-      yaml.write @travisYml, data, callback
+      yaml.read @travisYml, (error, data) =>
+        return callback error if error?
+        return callback new Error('Missing .travis.yml') unless data?
+        orgData = _.cloneDeep data
+        type = 'pro' if isPrivate
+        type ?= 'org'
+        _.set data, 'notifications.webhooks', [@webhookUrl]
+        data.after_success ?= []
+        after_success = []
+        if @type == 'node'
+          after_success = [
+            'bash <(curl -s https://codecov.io/bash)'
+            'bash <(curl -s https://codecov.octoblu.com/bash)'
+          ]
+        _.pullAll data.after_success, after_success
+        data.after_success = _.concat data.after_success, after_success
+        delete data.after_success if _.isEmpty data.after_success
+        return callback null if _.isEqual orgData, data
+        console.log colors.magenta('NOTICE'), colors.white('modifying .travis.yml')
+        yaml.write @travisYml, data, callback
 
   _modifyDockerfile: (callback) =>
     return callback null unless @type == 'node'
     console.log colors.magenta('NOTICE'), colors.white('use an octoblu base image in your Dockerfile')
-    console.log '  ', colors.cyan('Web Service:'), colors.white('`FROM octoblu/node:7-webservice-onbuild`')
-    console.log '  ', colors.cyan('Worker:     '), colors.white('`FROM octoblu/node:7-worker-onbuild`')
-    console.log '  ', colors.cyan('Static Site:'), colors.white('`FROM octoblu/node:7-staticsite-onbuild`')
-    console.log '  ', colors.cyan('Other:      '), colors.white('`FROM octoblu/node:7-alpine-gyp`')
+    console.log '  ', colors.cyan('Web Service:'), colors.white('`FROM octoblu/node:8-webservice-onbuild`')
+    console.log '  ', colors.cyan('Worker:     '), colors.white('`FROM octoblu/node:8-worker-onbuild`')
+    console.log '  ', colors.cyan('Static Site:'), colors.white('`FROM octoblu/node:8-staticsite-onbuild`')
+    console.log '  ', colors.cyan('Other:      '), colors.white('`FROM octoblu/node:8-alpine-gyp`')
     callback null
 
   _modifyDockerignore: (callback) =>
