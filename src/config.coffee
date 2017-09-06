@@ -70,7 +70,7 @@ class Config
               githubToken:  @_getConfigValue projectConfig, 'github.token'
               codefreshToken:  @_getConfigValue projectConfig, 'codefresh.token'
               quayToken:  @_getConfigValue projectConfig, 'quay.token'
-              dockerHubToken:  @_getConfigValue projectConfig, 'dockerHub.token'
+              dockerHubToken:  @_getConfigValue projectConfig, 'dockerHub.loginToken'
               dockerHubUsername:  @_getConfigValue projectConfig, 'dockerHub.username'
               dockerHubPassword:  @_getConfigValue projectConfig, 'dockerHub.password'
               projectRoot: @_getProjectConfigValue projectConfig, 'project.root', projectRoot

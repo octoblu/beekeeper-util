@@ -24,7 +24,11 @@ class Command
     { type } = program
     owner = program.owner || @config.owner
     tag = semver.valid(program.tag) || @config.version
-    ci_passing = program['ci-passing'] || false
+    ci_passing = program.ciPassing ? false
+    if ci_passing == 'true'
+      ci_passing = true
+    if ci_passing == 'false'
+      ci_passing = false
 
     @dieHelp new Error 'Missing repo argument' unless repo?
     @dieHelp new Error 'Missing type argument' unless type?
