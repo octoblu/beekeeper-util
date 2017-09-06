@@ -10,8 +10,8 @@ class ProjectService
   constructor: ({ config }) ->
     throw new Error 'Missing config argument' unless config?
     { beekeeperUri, projectRoot } = config
-    throw new Error 'Missing beekeeperUri in config' unless @beekeeperUri?
-    throw new Error 'Missing projectRoot in config' unless @projectRoot?
+    throw new Error 'Missing beekeeperUri in config' unless beekeeperUri?
+    throw new Error 'Missing projectRoot in config' unless projectRoot?
     @travisYml = path.join projectRoot, '.travis.yml'
     @packagePath = path.join projectRoot, 'package.json'
     @dockerFilePath = path.join projectRoot, 'Dockerfile'
