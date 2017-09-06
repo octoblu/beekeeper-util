@@ -7,9 +7,11 @@ class CodecovService
     throw new Error 'Missing config argument' unless config?
     throw new Error 'Missing travisService argument' unless @travisService?
     { @codecovToken } = config
-    throw new Error 'Missing codecovToken in config' unless @codecovToken?
+    if @codecovEnabled
+      throw new Error 'Missing codecovToken in config' unless @codecovToken?
 
   configure: ({ @repo, @owner, @isPrivate }, callback) =>
+    return callback null unless @codecovEnabled
     debug 'setting up travis', { @repo, @owner, @isPrivate }
     @_ensureRepo (error) =>
       return callback error if error?

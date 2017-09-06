@@ -6,10 +6,12 @@ class CodefreshService
   constructor: ({ config }) ->
     throw new Error 'Missing config argument' unless config?
     { @codefreshToken, @beekeeperUri } = config
-    throw new Error 'Missing codefreshToken in config' unless @codefreshToken?
+    if @codefreshEnabled
+      throw new Error 'Missing codefreshToken in config' unless @codefreshToken?
     throw new Error 'Missing beekeeperUri in config' unless @beekeeperUri?
 
   configure: ({ @repo, @owner, @isPrivate }, callback) =>
+    return callback null unless @codefreshEnabled
     debug 'setting up codefresh', { @repo, @owner, @isPrivate }
     @_ensureService (error) =>
       return callback error if error?

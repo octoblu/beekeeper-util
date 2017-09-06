@@ -65,21 +65,26 @@ class Config
             return callback error if error?
             coreInfo = {
               authors: @_getConfigValue projectConfig, 'authors'
-              beekeeperUri:  @_getConfigValue projectConfig, 'uri'
+              beekeeperUri:  @_getConfigValue projectConfig, 'beekeeper.uri'
+              codecovEnabled:  @_getConfigValue projectConfig, 'codecov.enabled'
               codecovToken:  @_getConfigValue projectConfig, 'codecov.token'
-              githubToken:  @_getConfigValue projectConfig, 'github.token'
+              githubToken:  @_getConfigValue projectConfig, 'beekeeper.github.token'
+              codefreshEnabled:  @_getConfigValue projectConfig, 'codefresh.enabled'
               codefreshToken:  @_getConfigValue projectConfig, 'codefresh.token'
+              quayEnabled:  @_getConfigValue projectConfig, 'quay.enabled'
               quayToken:  @_getConfigValue projectConfig, 'quay.token'
+              travisEnabled:  @_getConfigValue projectConfig, 'travis.enabled'
+              dockerHubEnabled:  @_getConfigValue projectConfig, 'dockerHub.enabled'
               dockerHubToken:  @_getConfigValue projectConfig, 'dockerHub.loginToken'
               dockerHubUsername:  @_getConfigValue projectConfig, 'dockerHub.username'
               dockerHubPassword:  @_getConfigValue projectConfig, 'dockerHub.password'
               projectRoot: @_getProjectConfigValue projectConfig, 'project.root', projectRoot
-              repo: @_getProjectConfigValue projectConfig, 'project.repo'
-              name: @_getProjectConfigValue projectConfig, 'project.name'
-              owner:  @_getConfigValue projectConfig, 'project.owner', 'octoblu'
-              type:  @_getConfigValue projectConfig, 'project.type', type || 'generic'
-              versionFileName:  @_getConfigValue projectConfig, 'project.versionFileName', versionFileName || 'VERSION'
-              version:  @_getConfigValue projectConfig, 'project.version', version || '1.0.0'
+              repo: @_getProjectConfigValue projectConfig, 'beekeeper.repo'
+              name: @_getProjectConfigValue projectConfig, 'beekeeper.name'
+              owner:  @_getConfigValue projectConfig, 'beekeeper.owner'
+              type:  @_getConfigValue projectConfig, 'beekeeper.type', type || 'generic'
+              versionFileName: @_getConfigValue projectConfig, 'beekeeper.versionFileName', versionFileName || 'VERSION'
+              version: @_getConfigValue projectConfig, 'beekeeper.version', version || '1.0.0'
             }
             callback null, coreInfo
 
@@ -142,11 +147,13 @@ class Config
 
   _parseName: (name) => _.last _.split(name, '/')
 
-  _getConfigValue: (projectConfig, configKey, defaultValue) =>
-    envStr = _.toUpper _.snakeCase configKey
-    envValue = process.env["BEEKEEPER_#{envStr}"] || process.env[envStr]
+  _getConfigValue: (projectConfig, key, defaultValue) =>
+    envStr = _.toUpper _.snakeCase key
+    envStr = "BEEKEEPER_#{envStr}" if process.env["BEEKEEPER_#{key}"]?
+    envValue = process.env[envStr]
+    configKey = _.trimStart key, 'beekeeper.'
     configValue = _.get projectConfig, configKey
-    globalConfigValue = _.get @beekeeperConfig, configKey
+    globalConfigValue = _.get @beekeeperConfig, _.trimStart('beekeeper.', configKey)
     debug { envStr, defaultValue, envValue, configKey, configValue, globalConfigValue }
     return globalConfigValue ? configValue ? envValue ? defaultValue
 

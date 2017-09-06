@@ -9,7 +9,7 @@ program
   .usage '[options] <project-name>'
   .option '-d, --docker-url <docker-url>', '(required) Docker URL to update'
   .option '-t, --tag <tag>', 'Project version (not the tag on the deployment). Defaults to package.version'
-  .option '-o, --owner <octoblu>', 'Project owner'
+  .option '-o, --owner <repo>', 'Project owner'
 
 class Command
   constructor: (@config) ->

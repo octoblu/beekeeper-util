@@ -2,10 +2,13 @@ request = require 'request'
 debug   = require('debug')('beekeeper-util:travis-github-token')
 
 class TravisGithubToken
-  constructor: ({ @githubToken }) ->
-    throw new Error 'Missing githubToken argument' unless @githubToken?
+  constructor: ({ config }) ->
+    throw new Error 'Missing config argument' unless config?
+    { @githubToken, @travisEnabled } = config
+    throw new Error 'Missing githubToken in config' unless @githubToken?
 
   getToken: ({ isPrivate }, callback) =>
+    return callback() unless @travisEnabled
     return callback() unless isPrivate
     options = {
       baseUrl: 'https://api.travis-ci.com'

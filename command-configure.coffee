@@ -15,7 +15,7 @@ packageJSON       = require './package.json'
 program
   .version packageJSON.version
   .usage '[options] <project-name>'
-  .option '-o, --owner <octoblu>', 'Project owner'
+  .option '-o, --owner <repo>', 'Project owner'
 
 class Command
   constructor: (@config) ->

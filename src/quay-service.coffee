@@ -8,11 +8,12 @@ QUAY_BASE_URL='https://quay.io/api/v1'
 class QuayService
   constructor: ({ config }) ->
     throw new Error 'Missing config argument' unless config?
-    { @quayToken } = config
-    throw new Error 'Missing quayToken in config' unless @quayToken?
-
+    { @quayToken, @quayEnabled } = config
+    if @quayEnabled
+      throw new Error 'Missing quayToken in config' unless @quayToken?
 
   configure: ({ @repo, @owner, @isPrivate }, callback) =>
+    return callback null unless @quayEnabled
     debug 'setting up quay'
     @_repositoryExists (error, exists) =>
       return callback error if error?

@@ -7,8 +7,9 @@ debug        = require('debug')('beekeeper-util:docker-hub-service')
 class DockerHubService
   constructor: ({ config }) ->
     throw new Error 'Missing config argument' unless config?
-    { dockerHubToken, beekeeperUri } = config
-    throw new Error 'Missing dockerHubToken in config' unless dockerHubToken?
+    { dockerHubToken, beekeeperUri, @dockerHubEnabled } = config
+    if @dockerHubEnabled
+      throw new Error 'Missing dockerHubToken in config' unless dockerHubToken?
     throw new Error 'Missing beekeeperUri in config' unless beekeeperUri?
     dockerHubApi.setLoginToken dockerHubToken
     urlParts = url.parse beekeeperUri
@@ -18,6 +19,7 @@ class DockerHubService
     debug 'webhookUrl', @webhookUrl
 
   configure: ({ @repo, @owner, @isPrivate, @noWebhook }, callback) =>
+    return callback null unless @dockerHubEnabled
     debug 'setting up docker', { @repo, @owner, @isPrivate, @noWebhook }
     @_ensureRepository (error) =>
       return callback error if error?

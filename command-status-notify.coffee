@@ -11,7 +11,7 @@ program
     'Filter by beekeeper tag (not related to git tags or the package.version).'
   .option '-j, --json', 'Print JSON'
   .option '-l, --latest', 'Override the tag with "latest"'
-  .option '-o, --owner <octoblu>', 'Project owner'
+  .option '-o, --owner <repo>', 'Project owner'
   .option '-t, --tag <tag>', 'Project version (not the tag on the deployment). Defaults to package.version'
   .option '-u, --service-url <url>', 'Poll <service-url>/version for the updated version'
 

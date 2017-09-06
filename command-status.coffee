@@ -13,7 +13,7 @@ program
   .option '-j, --json', 'Print JSON'
   .option '-l, --latest', 'Override the tag with "latest"'
   .option '-n, --notify', 'Notify when passing'
-  .option '-o, --owner <octoblu>', 'Project owner'
+  .option '-o, --owner <repo>', 'Project owner'
   .option '-t, --tag <tag>', 'Project version (not the tag on the deployment). Defaults to package.version'
   .option '-u, --service-url <url>', 'Poll <service-url>/version for the updated version'
   .option '-w, --watch', 'Watch deployment'

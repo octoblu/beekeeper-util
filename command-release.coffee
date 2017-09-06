@@ -17,7 +17,7 @@ program
   .version packageJSON.version
   .usage '[options] <message>'
   .option '-r, --repo <repo-name>', 'Project repo name'
-  .option '-o, --owner <octoblu>', 'Project owner'
+  .option '-o, --owner <repo>', 'Project owner'
   .option '-t, --tag <tag>', 'Override project version'
   .option '--init', 'Set version 1.0.0'
   .option '--major', 'Bump with semver major version'

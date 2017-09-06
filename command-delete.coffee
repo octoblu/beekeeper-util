@@ -9,7 +9,7 @@ program
   .version packageJSON.version
   .usage '[options] <project-name>'
   .option '-t, --tag <tag>', 'Project version'
-  .option '-o, --owner <octoblu>', 'Project owner'
+  .option '-o, --owner <repo>', 'Project owner'
 
 class Command
   constructor: (@config) ->

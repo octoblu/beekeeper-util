@@ -11,7 +11,7 @@ program
   .usage '[options] <tag>'
   .option '-r, --repo <repo-name>', 'Project repo name. Defaults to package.name'
   .option '-t, --tag <tag>', 'Project version (not the tag on the deployment). Defaults to package.version'
-  .option '-o, --owner <octoblu>', 'Project owner'
+  .option '-o, --owner <repo>', 'Project owner'
   .option '--prompt', 'Prompt before tagging. Defaults to false'
 
 class Command

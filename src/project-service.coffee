@@ -11,7 +11,14 @@ debug  = require('debug')('beekeeper-util:project-service')
 class ProjectService
   constructor: ({ config }) ->
     throw new Error 'Missing config argument' unless config?
-    { beekeeperUri, projectRoot, @type, @versionFileName } = config
+    {
+      beekeeperUri,
+      projectRoot,
+      @type,
+      @versionFileName
+      @codecovEnabled
+      @travisEnabled
+    } = config
     throw new Error 'Missing beekeeperUri in config' unless beekeeperUri?
     throw new Error 'Missing projectRoot in config' unless projectRoot?
     throw new Error 'Missing type in config' unless @type?
@@ -59,6 +66,7 @@ class ProjectService
 
   _modifyPackage: (callback) =>
     return callback() unless @type == 'node'
+    return callback null unless @codecovEnabled
     packageJSON = fs.readJsonSync @packagePath
     orgPackage = _.cloneDeep packageJSON
     packageJSON.scripts ?= {}
@@ -104,12 +112,14 @@ class ProjectService
     return { }
 
   _initTravisIfNeed: (callback) =>
+    return callback null unless @travisEnabled
     fs.access @travisYml, fs.constants.F_OK | fs.constants.W_OK, (error) =>
       return callback null unless error?
       console.log colors.magenta('NOTICE'), colors.white('creating .travis.yml')
       yaml.write @travisYml, @_defaultTravisFile(), callback
 
   _modifyTravis: ({ isPrivate }, callback) =>
+    return callback null unless @travisEnabled
     @_initTravisIfNeed (error) =>
       return callback error if error?
       yaml.read @travisYml, (error, data) =>
@@ -123,6 +133,8 @@ class ProjectService
         after_success = []
         if @type == 'node'
           after_success = [
+            'npm run coverage'
+            'npm run mocha:json'
             'bash <(curl -s https://codecov.io/bash)'
             'bash <(curl -s https://codecov.octoblu.com/bash)'
           ]
