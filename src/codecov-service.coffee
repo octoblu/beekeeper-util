@@ -17,27 +17,28 @@ class CodecovService
       return callback error if error?
       callback null
 
-  _ensureRepo: (callback) =>
-    @getRepo { @repo, @owner, @isPrivate }, (error, result) =>
-      return callback error if error?
-      return callback() if _.get(result, 'repo.activated') == true
-      @enableRepo { @repo, @owner, @isPrivate }, callback
-
   configureEnv: ({ @repo, @owner, @isPrivate }, callback) =>
+    return callback null unless @codecovEnabled
     return callback() unless @isPrivate
-    @getRepo { @repo, @owner, @isPrivate }, (error, result) =>
+    @_getRepo { @repo, @owner, @isPrivate }, (error, result) =>
       return callback error if error?
       uploadToken = _.get result, 'repo.upload_token'
       @travisService.updateEnv { @repo, @owner, @isPrivate, envName: 'CODECOV_TOKEN', envValue: uploadToken }, callback
 
-  getRepo: ({repo, owner}, callback) =>
+  _ensureRepo: (callback) =>
+    @_getRepo { @repo, @owner, @isPrivate }, (error, result) =>
+      return callback error if error?
+      return callback() if _.get(result, 'repo.activated') == true
+      @_enableRepo { @repo, @owner, @isPrivate }, callback
+
+  _getRepo: ({repo, owner}, callback) =>
     debug 'checking if repo exists'
     @_request { pathname: "/#{owner}/#{repo}" }, (error, repo) =>
       return callback error if error?
       debug 'repo', repo
       callback null, repo
 
-  enableRepo: ({ repo, owner }, callback) =>
+  _enableRepo: ({ repo, owner }, callback) =>
     body = 'action=activate'
     @_request { pathname: "/#{owner}/#{repo}/settings", method: 'POST', body }, (error) =>
       return callback error if error?

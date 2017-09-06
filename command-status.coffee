@@ -55,6 +55,7 @@ class Command
     }
 
   run: =>
+    return @die new Error('Beekeeper must be enabled') unless @config.beekeeperEnabled
     @statusService.run()
 
   dieHelp: (error) =>

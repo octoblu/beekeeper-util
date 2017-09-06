@@ -29,6 +29,7 @@ class Command
 
   run: =>
     {repo, owner, tag} = @parseOptions()
+    return @die new Error('Beekeeper must be enabled') unless @config.beekeeperEnabled
     @beekeeperService.delete { repo, owner, tag }, (error) =>
       return @die error if error?
       console.log colors.bold("[DELETED]"), "tag #{tag}"

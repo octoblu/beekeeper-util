@@ -18,8 +18,10 @@ class ProjectService
       @versionFileName
       @codecovEnabled
       @travisEnabled
+      @beekeeperEnabled
     } = config
-    throw new Error 'Missing beekeeperUri in config' unless beekeeperUri?
+    if @beekeeperEnabled
+      throw new Error 'Missing beekeeperUri in config' unless beekeeperUri?
     throw new Error 'Missing projectRoot in config' unless projectRoot?
     throw new Error 'Missing type in config' unless @type?
     throw new Error 'Missing versionFileName in config' unless @versionFileName?
@@ -128,7 +130,7 @@ class ProjectService
         orgData = _.cloneDeep data
         type = 'pro' if isPrivate
         type ?= 'org'
-        _.set data, 'notifications.webhooks', [@webhookUrl]
+        _.set data, 'notifications.webhooks', [@webhookUrl] if @beekeeperEnabled
         data.after_success ?= []
         after_success = []
         if @type == 'node'

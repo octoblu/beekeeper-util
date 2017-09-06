@@ -9,11 +9,13 @@ parseTag = (tag) =>
 class BeekeeperService
   constructor: ({ config }) ->
     throw new Error 'Missing config argument' unless config?
-    { @beekeeperUri } = config
-    throw new Error 'Missing beekeeperUri in config' unless @beekeeperUri?
-    debug 'using beekeeperUri', { @beekeeperUri }
+    { @beekeeperUri, @beekeeperEnabled } = config
+    if @beekeeperEnabled
+      throw new Error 'Missing beekeeperUri in config' unless @beekeeperUri?
+    debug 'using beekeeperUri', { @beekeeperUri, @beekeeperEnabled }
 
   create: ({ owner, repo, tag }, callback) =>
+    return callback null unless @beekeeperEnabled
     options =
       baseUrl: @beekeeperUri
       uri: "/deployments/#{owner}/#{repo}/#{parseTag(tag)}"
@@ -27,6 +29,7 @@ class BeekeeperService
       callback()
 
   delete: ({ owner, repo, tag }, callback) =>
+    return callback null unless @beekeeperEnabled
     options =
       baseUrl: @beekeeperUri
       uri: "/deployments/#{owner}/#{repo}/#{parseTag(tag)}"
@@ -39,6 +42,7 @@ class BeekeeperService
       callback()
 
   getTag: ({ owner, repo, tag, filter }, callback) =>
+    return callback null unless @beekeeperEnabled
     @_getTag { owner, repo, tag, filter }, (error, deployment) =>
       return callback error if error?
       return callback null, deployment, deployment if tag == 'latest'
@@ -49,6 +53,7 @@ class BeekeeperService
         callback null, deployment, latest
 
   tagDeployment: ({ owner, repo, tag, tagName }, callback) =>
+    return callback null unless @beekeeperEnabled
     options =
       baseUrl: @beekeeperUri
       uri: "/deployments/#{owner}/#{repo}/#{parseTag(tag)}/tags"
@@ -63,6 +68,7 @@ class BeekeeperService
       callback()
 
   update: ({ owner, repo, tag, docker_url }, callback) =>
+    return callback null unless @beekeeperEnabled
     options =
       baseUrl: @beekeeperUri
       uri: "/deployments/#{owner}/#{repo}/#{parseTag(tag)}"
@@ -76,6 +82,7 @@ class BeekeeperService
       callback()
 
   webhook: ({ owner, repo, tag, ci_passing, type }, callback) =>
+    return callback null unless @beekeeperEnabled
     options =
       baseUrl: @beekeeperUri
       uri: "/webhooks/#{type}/#{owner}/#{repo}"

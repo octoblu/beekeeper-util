@@ -36,6 +36,7 @@ class Command
     return { repo, owner, tag, ci_passing, type }
 
   run: =>
+    return @die new Error('Beekeeper must be enabled') unless @config.beekeeperEnabled
     @beekeeperService.webhook @parseOptions(), (error) =>
       return @die error if error?
       process.exit 0

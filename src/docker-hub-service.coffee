@@ -7,11 +7,18 @@ debug        = require('debug')('beekeeper-util:docker-hub-service')
 class DockerHubService
   constructor: ({ config }) ->
     throw new Error 'Missing config argument' unless config?
-    { dockerHubToken, beekeeperUri, @dockerHubEnabled } = config
+    {
+      @beekeeperEnabled,
+      beekeeperUri,
+      @dockerHubEnabled
+      @dockerHubUsername
+      @dockerHubPassword
+    } = config
     if @dockerHubEnabled
-      throw new Error 'Missing dockerHubToken in config' unless dockerHubToken?
-    throw new Error 'Missing beekeeperUri in config' unless beekeeperUri?
-    dockerHubApi.setLoginToken dockerHubToken
+      throw new Error 'Missing dockerHubUsername in config' unless @dockerHubUsername?
+      throw new Error 'Missing dockerHubPassword in config' unless @dockerHubPassword?
+    if @beekeeperEnabled
+      throw new Error 'Missing beekeeperUri in config' unless beekeeperUri?
     urlParts = url.parse beekeeperUri
     _.set urlParts, 'slashes', true
     _.set urlParts, 'pathname', '/webhooks/docker:hub'
@@ -21,9 +28,16 @@ class DockerHubService
   configure: ({ @repo, @owner, @isPrivate, @noWebhook }, callback) =>
     return callback null unless @dockerHubEnabled
     debug 'setting up docker', { @repo, @owner, @isPrivate, @noWebhook }
-    @_ensureRepository (error) =>
-      return callback error if error?
-      @_ensureWebhook callback
+    dockerHubApi.login @dockerHubUsername, @dockerHubPassword
+      .then (info) =>
+        dockerHubApi.setLoginToken info.token
+        @_ensureRepository (error) =>
+          return callback error if error?
+          @_ensureWebhook callback
+        return
+      .catch (error) =>
+        callback error
+    return
 
   _ensureRepository: (callback) =>
     @_getRepository (error, repo) =>
@@ -33,6 +47,7 @@ class DockerHubService
         @_createRepository callback
 
   _ensureWebhook: (callback) =>
+    return callback null unless @beekeeperEnabled
     return callback null if @noWebhook
     @_createWebhookV2 (error, webhookId) =>
       return callback error if error?

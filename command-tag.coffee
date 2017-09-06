@@ -35,6 +35,7 @@ class Command
     return { repo, owner, tag, tagName, prompt }
 
   run: =>
+    return @die new Error('Beekeeper must be enabled') unless @config.beekeeperEnabled
     { repo, owner, tag, tagName, @prompt } = @parseOptions()
     @beekeeperService.getTag { repo, owner, tag }, (error, deployment) =>
       return @die error if error?

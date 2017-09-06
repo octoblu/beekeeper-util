@@ -30,6 +30,7 @@ class Command
     return { repo, owner, tag, docker_url }
 
   run: =>
+    return @die new Error('Beekeeper must be enabled') unless @config.beekeeperEnabled
     {repo, owner, tag, docker_url } = @parseOptions()
     @beekeeperService.update { repo, owner, tag, docker_url }, (error) =>
       return @die error if error?
