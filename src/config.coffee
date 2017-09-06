@@ -81,7 +81,7 @@ class Config
               dockerHubToken:  @_getConfigValue projectConfig, 'dockerHub.loginToken'
               dockerHubUsername:  @_getConfigValue projectConfig, 'dockerHub.username'
               dockerHubPassword:  @_getConfigValue projectConfig, 'dockerHub.password'
-              projectRoot: @_getProjectConfigValue projectConfig, 'project.root', projectRoot
+              projectRoot: @_getProjectConfigValue projectConfig, 'beekeeper.projectRoot', projectRoot
               repo: @_getProjectConfigValue projectConfig, 'beekeeper.repo'
               name: @_getProjectConfigValue projectConfig, 'beekeeper.name'
               owner:  @_getConfigValue projectConfig, 'beekeeper.owner'

@@ -2,6 +2,10 @@ _       = require 'lodash'
 request = require 'request'
 debug   = require('debug')('beekeeper-util:service')
 
+parseTag = (tag) =>
+  return tag if tag == 'latest'
+  return "v#{tag}"
+
 class BeekeeperService
   constructor: ({ config }) ->
     throw new Error 'Missing config argument' unless config?
@@ -12,7 +16,7 @@ class BeekeeperService
   create: ({ owner, repo, tag }, callback) =>
     options =
       baseUrl: @beekeeperUri
-      uri: "/deployments/#{owner}/#{repo}/v#{tag}"
+      uri: "/deployments/#{owner}/#{repo}/#{parseTag(tag)}"
       json: true
     debug 'create options', options
     request.post options, (error, response, body) =>
@@ -25,7 +29,7 @@ class BeekeeperService
   delete: ({ owner, repo, tag }, callback) =>
     options =
       baseUrl: @beekeeperUri
-      uri: "/deployments/#{owner}/#{repo}/v#{tag}"
+      uri: "/deployments/#{owner}/#{repo}/#{parseTag(tag)}"
       json: true
     debug 'delete options', options
     request.delete options, (error, response) =>
@@ -47,7 +51,7 @@ class BeekeeperService
   tagDeployment: ({ owner, repo, tag, tagName }, callback) =>
     options =
       baseUrl: @beekeeperUri
-      uri: "/deployments/#{owner}/#{repo}/v#{tag}/tags"
+      uri: "/deployments/#{owner}/#{repo}/#{parseTag(tag)}/tags"
       json: { tagName }
     debug 'tag deployment options', options
     request.post options, (error, response, body) =>
@@ -61,7 +65,7 @@ class BeekeeperService
   update: ({ owner, repo, tag, docker_url }, callback) =>
     options =
       baseUrl: @beekeeperUri
-      uri: "/deployments/#{owner}/#{repo}/v#{tag}"
+      uri: "/deployments/#{owner}/#{repo}/#{parseTag(tag)}"
       json: { docker_url }
     debug 'update options', options
     request.patch options, (error, response, body) =>
@@ -87,7 +91,7 @@ class BeekeeperService
   _getTag: ({ owner, repo, tag, filter }, callback) =>
     options =
       baseUrl: @beekeeperUri
-      uri: "/deployments/#{owner}/#{repo}/v#{tag}"
+      uri: "/deployments/#{owner}/#{repo}/#{parseTag(tag)}"
       json: true
       qs: { tags: filter }
     debug 'get tag options', options
