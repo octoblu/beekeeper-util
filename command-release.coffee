@@ -39,17 +39,19 @@ class Command
 
   parseOptions: =>
     program.parse process.argv
-    message = program.args[0]
     repo = program.repo || @config.name
     owner = program.owner || @config.owner
     authors = _.map program.authors, (initial) => @config.authors[initial]
     tag = @getNewTag program
+    release = @getRelease program
+    message = _.trim "v#{tag} #{program.args[0] || ''}"
     return {
       repo,
       owner,
       tag,
       authors,
       message,
+      release
     }
 
   getNewTag: (program) =>
@@ -72,13 +74,14 @@ class Command
     return 'patch'
 
   run: =>
-    { authors, message, tag, owner, repo } = @parseOptions()
+    { authors, message, tag, owner, repo, release } = @parseOptions()
     async.series [
       async.apply @gitService.check, { tag }
       async.apply @projectService.initVersionFile
       async.apply @projectService.modifyVersion, { tag }
       async.apply @gitService.release, { authors, message, tag }
       async.apply @beekeeperService.create, { owner, repo, tag }
+      async.apply @githubService.createRelease, { owner, repo, tag, message, release }
     ], (error) =>
       return @die error if error?
       console.log colors.green("RELEASED"), colors.bold("v#{tag}")

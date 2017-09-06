@@ -69,6 +69,9 @@ class Config
               codecovEnabled:  @_getConfigValue projectConfig, 'codecov.enabled'
               codecovToken:  @_getConfigValue projectConfig, 'codecov.token'
               githubToken:  @_getConfigValue projectConfig, 'beekeeper.github.token'
+              githubRelease:  @_getConfigValue projectConfig, 'github.release.enabled', false
+              githubReleaseDraft:  @_getConfigValue projectConfig, 'github.release.draft', false
+              githubReleasePre:  @_getConfigValue projectConfig, 'github.release.prerelease', false
               codefreshEnabled:  @_getConfigValue projectConfig, 'codefresh.enabled'
               codefreshToken:  @_getConfigValue projectConfig, 'codefresh.token'
               quayEnabled:  @_getConfigValue projectConfig, 'quay.enabled'
