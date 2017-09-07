@@ -1,11 +1,12 @@
-_            = require 'lodash'
-path         = require 'path'
-fs           = require 'fs-extra'
-findVersions = require 'find-versions'
-gitTopLevel  = require 'git-toplevel'
-semver       = require 'semver'
-walkBack     = require 'walk-back'
-debug        = require('debug')('beekeeper-util:config')
+_             = require 'lodash'
+path          = require 'path'
+fs            = require 'fs-extra'
+findVersions  = require 'find-versions'
+gitTopLevel   = require 'git-toplevel'
+semver        = require 'semver'
+walkBack      = require 'walk-back'
+CONFIGURATION = require '../assets/configuration.json'
+debug         = require('debug')('beekeeper-util:config')
 
 class Config
   constructor: () ->
@@ -64,29 +65,9 @@ class Config
           @getVersion { versionFileName, projectRoot }, (error, version) =>
             return callback error if error?
             coreInfo = {
-              authors: @_getConfigValue projectConfig, 'authors'
-              beekeeperEnabled:  @_getConfigValue projectConfig, 'beekeeper.enabled', true
-              beekeeperUri:  @_getConfigValue projectConfig, 'beekeeper.uri'
-              codecovEnabled:  @_getConfigValue projectConfig, 'codecov.enabled'
-              codecovToken:  @_getConfigValue projectConfig, 'codecov.token'
-              githubToken:  @_getConfigValue projectConfig, 'beekeeper.github.token'
-              githubRelease:  @_getConfigValue projectConfig, 'github.release.enabled', false
-              githubReleaseDraft:  @_getConfigValue projectConfig, 'github.release.draft', false
-              githubReleasePre:  @_getConfigValue projectConfig, 'github.release.prerelease', false
-              codefreshEnabled:  @_getConfigValue projectConfig, 'codefresh.enabled'
-              codefreshToken:  @_getConfigValue projectConfig, 'codefresh.token'
-              quayEnabled:  @_getConfigValue projectConfig, 'quay.enabled'
-              quayToken:  @_getConfigValue projectConfig, 'quay.token'
-              travisEnabled:  @_getConfigValue projectConfig, 'travis.enabled'
-              dockerHubEnabled:  @_getConfigValue projectConfig, 'dockerHub.enabled'
-              dockerHubToken:  @_getConfigValue projectConfig, 'dockerHub.loginToken'
-              dockerHubUsername:  @_getConfigValue projectConfig, 'dockerHub.username'
-              dockerHubPassword:  @_getConfigValue projectConfig, 'dockerHub.password'
               projectRoot: @_getProjectConfigValue projectConfig, 'beekeeper.projectRoot', projectRoot
-              repo: @_getProjectConfigValue projectConfig, 'beekeeper.repo'
-              name: @_getProjectConfigValue projectConfig, 'beekeeper.name'
-              owner:  @_getConfigValue projectConfig, 'beekeeper.owner'
-              type:  @_getConfigValue projectConfig, 'beekeeper.type', type || 'generic'
+              name: @_getProjectConfigValue projectConfig, 'beekeeper.name', name
+              type: @_getConfigValue projectConfig, 'beekeeper.type', type || 'generic'
               versionFileName: @_getConfigValue projectConfig, 'beekeeper.versionFileName', versionFileName || 'VERSION'
               version: @_getConfigValue projectConfig, 'beekeeper.version', version || '1.0.0'
             }
@@ -97,7 +78,7 @@ class Config
     @_checkAccess configFile, (error, hasAccess) =>
       return callback error if error?
       return callback null unless hasAccess
-      fs.readJson configFile, callback
+      fs.readJson configFile, callback 
 
   getProjectType: (projectRoot, callback) =>
     @_nodeProjectInfo projectRoot, (error, info) =>
@@ -151,23 +132,19 @@ class Config
 
   _parseName: (name) => _.last _.split(name, '/')
 
-  _getConfigValue: (projectConfig, key, defaultValue) =>
-    envStr = _.toUpper _.snakeCase key
-    envStr = "BEEKEEPER_#{envStr}" if process.env["BEEKEEPER_#{key}"]?
-    envValue = process.env[envStr]
-    configKey = _.replace key, /^beekeeper\./, ''
-    configValue = _.get projectConfig, configKey
-    globalConfigValue = _.get @beekeeperConfig, configKey
-    debug 'get config value', { envStr, defaultValue, envValue, configKey, configValue, globalConfigValue }
-    return configValue ? globalConfigValue ? envValue ? defaultValue
+  _getConfig: (projectConfig) =>
+    result= {}
+    _.each CONFIGURATION, (config) =>
+      value = @_getConfigValue projectConfig, config
+      _.set result, config.key, value
+      return
+    return result
 
-  _getProjectConfigValue: (projectConfig, key, defaultValue) =>
-    envStr = _.toUpper _.snakeCase key
-    envStr = "BEEKEEPER_#{envStr}" if process.env["BEEKEEPER_#{key}"]?
-    envValue = process.env[envStr]
-    configKey = _.replace key, /^beekeeper\./, ''
-    configValue = _.get projectConfig, configKey
-    debug 'get project config value', { envStr, defaultValue, envValue, configKey, configValue }
-    return configValue ? envValue ? defaultValue
+  _getConfigValue: (projectConfig, config) =>
+    envValue = process.env[config.env]
+    value = _.get projectConfig, config.key
+    globalValue = _.get @beekeeperConfig, config.key
+    debug 'get config value', { config, envValue, value, globalValue }
+    return value ? globalValue ? envValue ? config.default
 
 module.exports = Config

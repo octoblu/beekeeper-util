@@ -1,0 +1,102 @@
+[
+  {
+    "key": "authors",
+    "env": ["BEEKEEPER_AUTHORS"],
+    "type": "object",
+    "default": {}
+  },
+  {
+    "key": "beekeeper.enabled",
+    "env": ["BEEKEEPER_ENABLED"],
+    "type": "boolean",
+    "default": true
+  },
+  {
+    "key": "beekeeper.uri",
+    "env": ["BEEKEEPER_URI"],
+    "type": "url"
+  },
+  {
+    "key": "github.token",
+    "env": ["BEEKEEPER_GITHUB_TOKEN"],
+    "type": "string"
+  },
+  {
+    "key": "github.release.enabled",
+    "env": ["BEEKEEPER_GITHUB_RELEASE_ENABLED"],
+    "type": "boolean",
+    "default": true
+  },
+  {
+    "key": "github.release.draft",
+    "env": ["BEEKEEPER_GITHUB_RELEASE_DRAFT"],
+    "type": "boolean",
+    "default": false
+  },
+  {
+    "key": "github.release.prerelease",
+    "env": ["BEEKEEPER_GITHUB_RELEASE_PRERELEASE"],
+    "type": "boolean",
+    "default": false
+  },
+  {
+    "key": "codecov.enabled",
+    "env": ["BEEKEEPER_CODECOV_ENABLED"],
+    "type": "boolean",
+    "default": true
+  },
+  {
+    "key": "codecov.token",
+    "env": ["BEEKEEPER_CODECOV_TOKEN"],
+    "type": "string"
+  },
+  {
+    "key": "codefresh.enabled",
+    "env": ["BEEKEEPER_CODEFRESH_ENABLED"],
+    "type": "boolean",
+    "default": true
+  },
+  {
+    "key": "codefresh.token",
+    "env": ["BEEKEEPER_CODEFRESH_TOKEN"],
+    "type": "string"
+  },
+  {
+    "key": "quay.enabled",
+    "env": ["BEEKEEPER_QUAY_ENABLED"],
+    "type": "boolean",
+    "default": true
+  },
+  {
+    "key": "quay.token",
+    "env": ["BEEKEEPER_QUAY_TOKEN"],
+    "type": "string"
+  },
+  {
+    "key": "travis.enabled",
+    "env": ["BEEKEEPER_TRAVIS_ENABLED"],
+    "type": "boolean",
+    "default": true
+  },
+  {
+    "key": "travis.token",
+    "env": ["BEEKEEPER_GITHUB_TOKEN"],
+    "type": "string"
+  },
+  {
+    "key": "dockerHub.enabled",
+    "env": ["BEEKEEPER_DOCKERHUB_ENABLED"],
+    "type": "boolean",
+    "default": true
+  },
+  {
+    "key": "dockerHub.username",
+    "env": ["BEEKEEPER_DOCKER_HUB_USERNAME", "DOCKER_HUB_USERNAME"],
+    "type": "string"
+  },
+  {
+    "key": "dockerHub.password",
+    "env": ["BEEKEEPER_DOCKER_HUB_PASSWORD", "DOCKER_HUB_PASSWORD"],
+    "type": "string"
+  }
+]
