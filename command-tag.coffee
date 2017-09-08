@@ -55,11 +55,11 @@ class Command
     process.exit(0)
 
   printSuccess: ({ tag, tagName })=>
-    console.log("Tagged #{tag} with #{tagName}")
+    console.log("Tagged v#{tag} with #{tagName}")
     process.exit(0)
 
   printDeploymentMissing: ({ tag })=>
-    console.log("Deployment for #{tag} is missing")
+    console.log("Deployment for v#{tag} is missing")
     process.exit(1)
 
   printUnwilling: =>
@@ -77,7 +77,7 @@ class Command
     console.log ''
     @confirm "Did you test it?", =>
       @confirm "Are you sure '#{tagName}' is ready?", =>
-        console.log bold "Tagging version #{tag} with #{tagName}"
+        console.log bold "Tagging version v#{tag} with #{tagName}"
         callback()
 
   confirm: (message, callback) =>
