@@ -72,7 +72,7 @@ class Command
 
   run: =>
     { message, tag, owner, repo, release } = @parseOptions()
-    @spinner.log("Releasing v#{tag}", '🐝')
+    @spinner.log("Releasing v#{tag} (#{release})", '🐝')
     @spinner.start("Beekeeping")
     async.series [
       async.apply @gitService.check, { tag }
