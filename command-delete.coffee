@@ -18,9 +18,9 @@ class Command
 
   parseOptions: =>
     program.parse process.argv
-    repo = program.args[0] || @config.name
-    owner = program.owner || @config.owner
-    tag = semver.valid(program.tag) || @config.version
+    repo = program.args[0] || @config.project.name
+    owner = program.owner || @config.project.owner
+    tag = semver.valid(program.tag) || @config.project.version
 
     @dieHelp new Error 'Missing repo' unless repo?
     @dieHelp new Error 'Missing tag' unless tag?
@@ -29,7 +29,7 @@ class Command
 
   run: =>
     {repo, owner, tag} = @parseOptions()
-    return @die new Error('Beekeeper must be enabled') unless @config.beekeeperEnabled
+    return @die new Error('Beekeeper must be enabled') unless @config.beekeeper.enabled
     @beekeeperService.delete { repo, owner, tag }, (error) =>
       return @die error if error?
       console.log colors.bold("[DELETED]"), "tag #{tag}"

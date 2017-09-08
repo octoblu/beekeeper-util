@@ -8,13 +8,13 @@ debug            = require('debug')('beekeeper-util:git-service')
 class GitService
   constructor: ({ config }) ->
     throw new Error "GitService missing config argument" unless config?
-    { @projectRoot } = config
-    throw new Error "GitService requires projectRoot in config" unless @projectRoot?
+    { @project } = config
+    throw new Error "GitService requires project in config" unless @project.root?
 
   check: ({ tag }, callback) =>
-    isGit @projectRoot, (isGitRepo) =>
+    isGit @project.root, (isGitRepo) =>
       return callback new Error('Must be a git repo') unless isGitRepo
-      check @projectRoot, (error, result) =>
+      check @project.root, (error, result) =>
         return callback error if error?
         { branch } = result
         return callback new Error 'Branch must be master' unless branch == 'master'
@@ -23,7 +23,7 @@ class GitService
   release: ({ authors, message, tag }, callback) =>
     git = @_git()
     @_setAuthors git, authors
-    git.add path.join(@projectRoot, '*')
+    git.add path.join(@project.root, '*')
     git.commit message, (error) =>
       return callback error if error?
       @_tagAndPush git, tag, callback
@@ -53,7 +53,7 @@ class GitService
         return callback error if error?
         git.pushTags callback
 
-  _git: () => simpleGit @projectRoot
+  _git: () => simpleGit @project.root
 
   _validateTag: ({ tag }, callback) =>
     return callback new Error "Invalid tag v#{tag}" unless semver.valid tag

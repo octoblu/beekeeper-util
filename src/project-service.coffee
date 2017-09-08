@@ -12,31 +12,21 @@ class ProjectService
   constructor: ({ config }) ->
     throw new Error 'Missing config argument' unless config?
     {
-      beekeeperUri,
-      projectRoot,
-      @type,
-      @versionFileName
-      @codecovEnabled
-      @travisEnabled
-      @beekeeperEnabled
+      @beekeeper,
+      @project,
+      @codecov,
+      @travis,
     } = config
-    if @beekeeperEnabled
-      throw new Error 'Missing beekeeperUri in config' unless beekeeperUri?
-    throw new Error 'Missing projectRoot in config' unless projectRoot?
-    throw new Error 'Missing type in config' unless @type?
-    throw new Error 'Missing versionFileName in config' unless @versionFileName?
-    @travisYml = path.join projectRoot, '.travis.yml'
-    @packagePath = path.join projectRoot, 'package.json'
-    @dockerFilePath = path.join projectRoot, 'Dockerfile'
-    @dockerignorePath = path.join projectRoot, '.dockerignore'
-    @versionFile = path.join projectRoot, @versionFileName
-    urlParts = url.parse beekeeperUri
-    _.set urlParts, 'slashes', true
-    delete urlParts.auth
-    delete urlParts.password
-    delete urlParts.username
-    _.set urlParts, 'pathname', '/webhooks/travis:ci'
-    @webhookUrl = url.format urlParts
+    if @beekeeper.enabled
+      throw new Error 'Missing beekeeper.uri in config' unless @beekeeper.uri?
+    throw new Error 'Missing project.root in config' unless @project.root?
+    throw new Error 'Missing project.type in config' unless @project.type?
+    throw new Error 'Missing project.versionFileName in config' unless @project.versionFileName?
+    @travisYml = path.join @project.root, '.travis.yml'
+    @packagePath = path.join @project.root, 'package.json'
+    @dockerFilePath = path.join @project.root, 'Dockerfile'
+    @dockerignorePath = path.join @project.root, '.dockerignore'
+    @versionFile = path.join @project.root, @project.versionFileName
 
   configure: ({ isPrivate }, callback) =>
     @_modifyTravis { isPrivate }, (error) =>
@@ -48,7 +38,7 @@ class ProjectService
           @_modifyPackage callback
 
   initVersionFile: (callback) =>
-    return callback null unless @versionFileName == 'VERSION'
+    return callback null unless @project.versionFileName == 'VERSION'
     fs.access @versionFile, fs.constants.F_OK, (error) =>
       return callback null unless error?
       @modifyVersion { tag: '1.0.0' }, callback
@@ -67,7 +57,7 @@ class ProjectService
       fs.writeFile @versionFile, newContents, callback
 
   _modifyPackage: (callback) =>
-    return callback() unless @type == 'node'
+    return callback() unless @project.type == 'node'
     return callback null unless @codecovEnabled
     packageJSON = fs.readJsonSync @packagePath
     orgPackage = _.cloneDeep packageJSON
@@ -97,14 +87,14 @@ class ProjectService
     fs.writeJson @packagePath, packageJSON, { spaces: 2 }, callback
 
   _defaultTravisFile: () =>
-    if @type == 'node'
+    if @project.type == 'node'
       return {
         language: 'node_js'
         node_js: ['8']
         branches:
           only: ["/^v[0-9]/"]
       }
-    if @type == 'golang'
+    if @project.type == 'golang'
       return {
         language: 'go'
         go: ['1.9']
@@ -130,10 +120,18 @@ class ProjectService
         orgData = _.cloneDeep data
         type = 'pro' if isPrivate
         type ?= 'org'
-        _.set data, 'notifications.webhooks', [@webhookUrl] if @beekeeperEnabled
+        if @beekeeper.enabled
+          urlParts = url.parse @beekeeper.uri
+          _.set urlParts, 'slashes', true
+          delete urlParts.auth
+          delete urlParts.password
+          delete urlParts.username
+          _.set urlParts, 'pathname', '/webhooks/travis:ci'
+          webhookUrl = url.format urlParts
+          _.set data, 'notifications.webhooks', [webhookUrl]
         data.after_success ?= []
         after_success = []
-        if @type == 'node'
+        if @project.type == 'node'
           after_success = [
             'npm run coverage'
             'npm run mocha:json'
@@ -148,7 +146,7 @@ class ProjectService
         yaml.write @travisYml, data, callback
 
   _modifyDockerfile: (callback) =>
-    return callback null unless @type == 'node'
+    return callback null unless @project.type == 'node'
     console.log colors.magenta('NOTICE'), colors.white('use an octoblu base image in your Dockerfile')
     console.log '  ', colors.cyan('Web Service:'), colors.white('`FROM octoblu/node:8-webservice-onbuild`')
     console.log '  ', colors.cyan('Worker:     '), colors.white('`FROM octoblu/node:8-worker-onbuild`')

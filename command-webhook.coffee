@@ -19,11 +19,11 @@ class Command
 
   parseOptions: =>
     program.parse process.argv
-    repo = program.args[0] || @config.name
+    repo = program.args[0] || @config.project.name
 
     { type } = program
-    owner = program.owner || @config.owner
-    tag = semver.valid(program.tag) || @config.version
+    owner = program.owner || @config.project.owner
+    tag = semver.valid(program.tag) || @config.project.version
     ci_passing = program.ciPassing ? false
     if ci_passing == 'true'
       ci_passing = true
@@ -36,7 +36,7 @@ class Command
     return { repo, owner, tag, ci_passing, type }
 
   run: =>
-    return @die new Error('Beekeeper must be enabled') unless @config.beekeeperEnabled
+    return @die new Error('Beekeeper must be enabled') unless @config.beekeeper.enabled
     @beekeeperService.webhook @parseOptions(), (error) =>
       return @die error if error?
       process.exit 0

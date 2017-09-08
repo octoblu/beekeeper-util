@@ -18,10 +18,10 @@ class Command
 
   parseOptions: =>
     program.parse process.argv
-    repo = program.args[0] || @config.name
+    repo = program.args[0] || @config.project.name
 
-    owner = program.owner || @config.owner
-    tag = semver.valid(program.tag) || @config.version
+    owner = program.owner || @config.project.owner
+    tag = semver.valid(program.tag) || @config.project.version
     docker_url = program.dockerUrl
 
     @dieHelp new Error 'Missing repo argument' unless repo?
@@ -30,7 +30,7 @@ class Command
     return { repo, owner, tag, docker_url }
 
   run: =>
-    return @die new Error('Beekeeper must be enabled') unless @config.beekeeperEnabled
+    return @die new Error('Beekeeper must be enabled') unless @config.beekeeper.enabled
     {repo, owner, tag, docker_url } = @parseOptions()
     @beekeeperService.update { repo, owner, tag, docker_url }, (error) =>
       return @die error if error?

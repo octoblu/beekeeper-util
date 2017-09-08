@@ -8,115 +8,99 @@ walkBack      = require 'walk-back'
 CONFIGURATION = require '../assets/configuration.json'
 debug         = require('debug')('beekeeper-util:config')
 
-class Config
-  constructor: () ->
-    @initConfig()
-
-  initConfig: =>
-    beekeeperConfigPath = walkBack '.', '.beekeeper_global.json'
-    return unless beekeeperConfigPath?
-    @beekeeperConfig = fs.readJsonSync beekeeperConfigPath
-
+class BeekeeperConfig
   get: (callback) =>
-    @getCoreProjectInfo (error, coreProjectInfo) =>
+    @_getProjectRoot (error, projectRoot) =>
       return callback error if error?
-      @getProjectInfo coreProjectInfo, (error, config) =>
+      @_getBeekeperConfig projectRoot, (error, projectConfig) =>
         return callback error if error?
-        debug 'project config', { config }
-        callback null, config
+        @_getProjectInfo projectRoot, (error, projectInfo) =>
+          return callback error if error?
+          config = _.defaultsDeep {}, projectInfo, projectConfig
+          debug 'project config', { config }
+          callback null, config
 
-  getProjectInfo: (coreProjectInfo, callback) =>
-    { type, projectRoot, owner } = coreProjectInfo
-    @getProjectName { projectRoot, type }, (error, name) =>
+  _getBeekeperConfig: (projectRoot, callback) =>
+    projectConfigPath = path.join projectRoot, '.beekeeper.json'
+    globalConfigPath = walkBack '.', '.beekeeper_global.json'
+    @_readJSONFile globalConfigPath, (error, globalConfig) =>
       return callback error if error?
-      callback null, _.assign coreProjectInfo, {
-        repo: "#{owner}/#{name}"
-        name
-      }
+      @_readJSONFile projectConfigPath, (error, projectConfig) =>
+        return callback error if error?
+        callback null, @_mapBeekeeperConfig globalConfig, projectConfig
 
-  getProjectName: ({ type, projectRoot }, callback) =>
-    return callback null, path.basename(projectRoot) unless type == 'node'
-    filePath = path.join(projectRoot, 'package.json')
+  _getProjectInfo: (projectRoot, callback) =>
+    @_getProjectLanguage projectRoot, (error, language, versionFileName) =>
+      return callback error if error?
+      @_getProjectName projectRoot, language, (error, name) =>
+        return callback error if error?
+        @_getProjectVersion projectRoot, versionFileName, (error, version) =>
+          return callback error if error?
+          callback null, {
+            project: {
+              name,
+              language,
+              versionFileName,
+              version,
+              root: projectRoot,
+            }
+          }
+
+  _getProjectName: (projectRoot, language, callback) =>
+    return callback null, path.basename(projectRoot) unless language == 'node'
+    filePath = path.join projectRoot, 'package.json'
     fs.readJson filePath, (error, contents) =>
       return callback error if error?
       callback null, @_parseName _.get contents, 'name'
 
-  getVersion: ({ versionFileName, projectRoot }, callback) =>
-    @_findVersionInFile path.join(projectRoot, versionFileName), (error, version) =>
-      return callback error if error?
-      return callback null unless semver.valid version
-      callback null, semver.clean version
-
-  getProjectRoot: (callback) =>
+  _getProjectRoot: (callback) =>
     gitTopLevel()
       .then (dir) =>
         callback null, dir
       .catch (error) =>
         callback error
 
-  getCoreProjectInfo: (callback) =>
-    @getProjectRoot (error, projectRoot) =>
+  _getProjectVersion: (projectRoot, versionFileName, callback) =>
+    @_findVersionInFile path.join(projectRoot, versionFileName), (error, version) =>
       return callback error if error?
-      @getProjectConfig projectRoot, (error, projectConfig) =>
+      return callback null unless semver.valid version
+      callback null, semver.clean version
+
+  _getProjectLanguage: (projectRoot, callback) =>
+    @_nodeProjectInfo projectRoot, (error, language, versionFileName) =>
+      return callback error if error?
+      return callback null, language, versionFileName if language?
+      @_golangProjectInfo projectRoot, (error, language, versionFileName) =>
         return callback error if error?
-        @getProjectType projectRoot, (error, projectType) =>
+        return callback null, language, versionFileName if language?
+        @_genericProjectInfo projectRoot, (error, language, versionFileName) =>
           return callback error if error?
-          { versionFileName, type } = projectType
-          @getVersion { versionFileName, projectRoot }, (error, version) =>
-            return callback error if error?
-            coreInfo = {
-              projectRoot: @_getProjectConfigValue projectConfig, 'beekeeper.projectRoot', projectRoot
-              name: @_getProjectConfigValue projectConfig, 'beekeeper.name', name
-              type: @_getConfigValue projectConfig, 'beekeeper.type', type || 'generic'
-              versionFileName: @_getConfigValue projectConfig, 'beekeeper.versionFileName', versionFileName || 'VERSION'
-              version: @_getConfigValue projectConfig, 'beekeeper.version', version || '1.0.0'
-            }
-            callback null, coreInfo
-
-  getProjectConfig: (projectRoot, callback) =>
-    configFile = path.join(projectRoot, '.beekeeper.json')
-    @_checkAccess configFile, (error, hasAccess) =>
-      return callback error if error?
-      return callback null unless hasAccess
-      fs.readJson configFile, callback 
-
-  getProjectType: (projectRoot, callback) =>
-    @_nodeProjectInfo projectRoot, (error, info) =>
-      return callback error if error?
-      return callback null, info if info?
-      @_golangProjectInfo projectRoot, (error, info) =>
-        return callback error if error?
-        return callback null, info if info?
-        @_genericProjectInfo projectRoot, callback
+          callback null, language, versionFileName
 
   _nodeProjectInfo: (projectRoot, callback) =>
     @_checkAccess path.join(projectRoot, 'package.json'), (error, hasAccess) =>
       return callback error if error?
       return callback null unless hasAccess
-      return callback null, {
-        type: 'node',
-        versionFileName: 'package.json'
-      }
+      return callback null, 'node', 'package.json'
 
   _golangProjectInfo: (projectRoot, callback) =>
     @_checkAccess path.join(projectRoot, 'version.go'), (error, hasAccess) =>
       return callback error if error?
-      if hasAccess
-        return callback null, {
-          type: 'golang',
-          versionFileName: 'version.go'
-        }
+      return callback null, 'golang', 'version.go' if hasAccess
       @_checkAccess path.join(projectRoot, 'main.go'), (error, hasAccess) =>
         return callback error if error?
         return callback null unless hasAccess
-        return callback null, {
-          type: 'golang',
-          versionFileName: 'VERSION'
-        }
+        return callback null, 'golang', 'main.go'
 
   _checkAccess: (filePath, callback) =>
     fs.access filePath, fs.constants.F_OK | fs.constants.R_OK, (error) =>
       callback null, !error?
+
+  _readJSONFile: (filePath, callback) =>
+    @_checkAccess filePath, (error, hasAccess) =>
+      return callback error if error?
+      return callback null unless hasAccess
+      fs.readJson filePath, callback
 
   _findVersionInFile: (filePath, callback) =>
     @_checkAccess filePath, (error, hasAccess) =>
@@ -132,19 +116,23 @@ class Config
 
   _parseName: (name) => _.last _.split(name, '/')
 
-  _getConfig: (projectConfig) =>
+  _mapBeekeeperConfig: (globalConfig, projectConfig) =>
     result= {}
-    _.each CONFIGURATION, (config) =>
-      value = @_getConfigValue projectConfig, config
-      _.set result, config.key, value
+    _.each CONFIGURATION, (configItem) =>
+      value = @_getConfigValue globalConfig, projectConfig, configItem
+      _.set result, configItem.key, value
       return
     return result
 
-  _getConfigValue: (projectConfig, config) =>
-    envValue = process.env[config.env]
-    value = _.get projectConfig, config.key
-    globalValue = _.get @beekeeperConfig, config.key
-    debug 'get config value', { config, envValue, value, globalValue }
-    return value ? globalValue ? envValue ? config.default
+  _getConfigValue: (globalConfig, projectConfig, configItem) =>
+    envValue = process.env[configItem.env]
+    value = _.get projectConfig, configItem.key
+    globalValue = _.get globalConfig, configItem.key
+    debug 'get config value', { configItem, envValue, value, globalValue }
+    return value ? envValue ? globalValue ? configItem.default
 
-module.exports = Config
+  _getEnvValue: (configItem) =>
+    return _.find _.castArray(configItem.env), (envStr) =>
+      return process.env[envStr]
+
+module.exports = BeekeeperConfig

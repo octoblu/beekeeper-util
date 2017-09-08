@@ -12,6 +12,35 @@
     "default": true
   },
   {
+    "key": "project.name",
+    "env": ["BEEKEEPER_PROJECT_REPO_NAME"],
+    "type": "string"
+  },
+  {
+    "key": "project.owner",
+    "env": ["BEEKEEPER_PROJECT_OWNER"],
+    "type": "string",
+    "default": "octoblu"
+  },
+  {
+    "key": "project.versionFileName",
+    "env": ["BEEKEEPER_PROJECT_VERSION_FILE_NAME"],
+    "type": "string",
+    "default": "VERSION"
+  },
+  {
+    "key": "project.version",
+    "env": ["BEEKEEPER_PROJECT_VERSION"],
+    "type": "string",
+    "default": "1.0.0"
+  },
+  {
+    "key": "project.language",
+    "env": ["BEEKEEPER_PROJECT_LANGUAGE"],
+    "type": "string",
+    "default": "generic"
+  },
+  {
     "key": "beekeeper.uri",
     "env": ["BEEKEEPER_URI"],
     "type": "url"

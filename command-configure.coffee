@@ -32,8 +32,8 @@ class Command
   parseOptions: =>
     program.parse process.argv
 
-    repo = program.args[0] || @config.name
-    owner = program.owner || @config.owner
+    repo = program.args[0] || @config.project.name
+    owner = program.owner || @config.project.owner
 
     return {
       repo,

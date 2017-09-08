@@ -39,8 +39,8 @@ class Command
 
   parseOptions: =>
     program.parse process.argv
-    repo = program.repo || @config.name
-    owner = program.owner || @config.owner
+    repo = program.repo || @config.project.name
+    owner = program.owner || @config.project.owner
     authors = _.map program.authors, (initial) => @config.authors[initial]
     tag = @getNewTag program
     release = @getRelease program
@@ -56,7 +56,7 @@ class Command
 
   getNewTag: (program) =>
     return semver.valid program.tag if semver.valid program.tag
-    tag = @config.version
+    tag = @config.project.version
     release = @getRelease program
     return '1.0.0' if release == 'init'
     preid = program.prerelease

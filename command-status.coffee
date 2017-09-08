@@ -34,9 +34,9 @@ class Command
       serviceUrl
       filter
     } = program
-    repo = program.args[0] || @config.name
-    owner = program.owner || @config.owner
-    tag = semver.valid(program.tag) || @config.version
+    repo = program.args[0] || @config.project.name
+    owner = program.owner || @config.project.owner
+    tag = semver.valid(program.tag) || @config.project.version
     tag ?= 'latest'
     tag = 'latest' if latest?
 
@@ -55,7 +55,7 @@ class Command
     }
 
   run: =>
-    return @die new Error('Beekeeper must be enabled') unless @config.beekeeperEnabled
+    return @die new Error('Beekeeper must be enabled') unless @config.beekeeper.enabled
     @statusService.run()
 
   dieHelp: (error) =>

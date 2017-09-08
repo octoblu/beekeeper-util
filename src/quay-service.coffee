@@ -8,9 +8,9 @@ QUAY_BASE_URL='https://quay.io/api/v1'
 class QuayService
   constructor: ({ config }) ->
     throw new Error 'Missing config argument' unless config?
-    { @quayToken, @quayEnabled } = config
-    if @quayEnabled
-      throw new Error 'Missing quayToken in config' unless @quayToken?
+    { @quay } = config
+    if @quay.enabled
+      throw new Error 'Missing quay.token in config' unless @quay.token?
 
   configure: ({ @repo, @owner, @isPrivate }, callback) =>
     return callback null unless @quayEnabled
@@ -65,7 +65,7 @@ class QuayService
       uri,
       baseUrl: QUAY_BASE_URL
       headers:
-        Authorization: "Bearer #{@quayToken}"
+        Authorization: "Bearer #{@quay.token}"
       followAllRedirects: true
       json
     }

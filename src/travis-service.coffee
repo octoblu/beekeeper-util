@@ -7,12 +7,12 @@ TravisGithubToken = require './travis-github-token.coffee'
 class TravisService
   constructor: ({ @config }) ->
     throw new Error 'Missing config argument' unless @config?
-    { @githubToken, @travisEnabled } = @config
-    if @travisEnabled
-      throw new Error 'Missing githubToken in config' unless @githubToken?
+    { @github, @travis } = @config
+    if @travis.enabled
+      throw new Error 'Missing github.token in config' unless @github.token?
 
   configure: ({ @repo, @owner, @isPrivate }, callback) =>
-    return callback null unless @travisEnabled
+    return callback null unless @travis.enabled
     debug 'setting up travis', { @repo, @owner, @isPrivate }
     travisGithubToken = new TravisGithubToken { @config }
     travisGithubToken.getToken {@repo, @owner, @isPrivate}, (error, @travisToken) =>
@@ -20,10 +20,10 @@ class TravisService
       @_ensureRepo (error) =>
         return callback error if error?
         callback null
-        
+
   updateEnv: ({ repo, owner, @isPrivate, envName, envValue }, callback) =>
-    return callback null unless @travisEnabled
-    travisGithubToken = new TravisGithubToken { @githubToken }
+    return callback null unless @travis.enabled
+    travisGithubToken = new TravisGithubToken { @config }
     travisGithubToken.getToken { @repo, @owner, @isPrivate }, (error, @travisToken) =>
       return callback error if error?
       @_getRepo { repo, owner, @isPrivate }, (error, result) =>

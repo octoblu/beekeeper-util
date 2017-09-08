@@ -4,8 +4,8 @@ debug             = require('debug')('beekeeper-util:github-service')
 class GithubService
   constructor: ({ config }) ->
     throw new Error 'Missing config argument' unless config?
-    { @githubToken, @githubRelease, @githubReleaseDraft, @githubReleasePre } = config
-    throw new Error 'Missing githubToken in config' unless @githubToken?
+    { @github } = config
+    throw new Error 'Missing github.token in config' unless @github.token?
 
   getRepo: ({ repo, owner }, callback) =>
     debug 'checking if repo exists'
@@ -15,7 +15,7 @@ class GithubService
       callback null, repo
 
   createRelease: ({ repo, owner, tag, message, release }, callback) =>
-    return callback null unless @githubRelease
+    return callback null unless @github.release.enabled
     options = {
       pathname: "/repos/#{owner}/#{repo}/releases"
       method: 'POST'
@@ -24,8 +24,8 @@ class GithubService
         target_commitish: 'master'
         name: "v#{tag}"
         body: message
-        draft: @githubReleaseDraft || false
-        prerelease: @githubReleasePre || release == 'prerelease'
+        draft: @github.release.draft || false
+        prerelease: @github.release.prerelease || release == 'prerelease'
     }
     debug 'creating github release', options
     @_request options, (error, repo) =>

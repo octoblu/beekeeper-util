@@ -24,9 +24,9 @@ class Command
     tagName = program.args[0]
 
     { prompt } = program
-    repo = program.repo || @config.name
-    owner = program.owner || @config.owner
-    tag = semver.valid(program.tag) || @config.version
+    repo = program.repo || @config.project.name
+    owner = program.owner || @config.project.owner
+    tag = semver.valid(program.tag) || @config.project.version
 
     @dieHelp new Error 'Missing tag argument' unless tagName?
     @dieHelp new Error 'Must specify a repo' unless repo?
@@ -35,7 +35,7 @@ class Command
     return { repo, owner, tag, tagName, prompt }
 
   run: =>
-    return @die new Error('Beekeeper must be enabled') unless @config.beekeeperEnabled
+    return @die new Error('Beekeeper must be enabled') unless @config.beekeeper.enabled
     { repo, owner, tag, tagName, @prompt } = @parseOptions()
     @beekeeperService.getTag { repo, owner, tag }, (error, deployment) =>
       return @die error if error?

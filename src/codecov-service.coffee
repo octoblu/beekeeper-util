@@ -6,19 +6,19 @@ class CodecovService
   constructor: ({ config, @travisService }) ->
     throw new Error 'Missing config argument' unless config?
     throw new Error 'Missing travisService argument' unless @travisService?
-    { @codecovToken } = config
-    if @codecovEnabled
-      throw new Error 'Missing codecovToken in config' unless @codecovToken?
+    { @codecov } = config
+    if @codecov.enabled
+      throw new Error 'Missing codecov.token in config' unless @codecov.token?
 
   configure: ({ @repo, @owner, @isPrivate }, callback) =>
-    return callback null unless @codecovEnabled
+    return callback null unless @codecov.enabled
     debug 'setting up travis', { @repo, @owner, @isPrivate }
     @_ensureRepo (error) =>
       return callback error if error?
       callback null
 
   configureEnv: ({ @repo, @owner, @isPrivate }, callback) =>
-    return callback null unless @codecovEnabled
+    return callback null unless @codecov.enabled
     return callback() unless @isPrivate
     @_getRepo { @repo, @owner, @isPrivate }, (error, result) =>
       return callback error if error?
@@ -49,7 +49,7 @@ class CodecovService
     options = {
       baseUrl: 'https://codecov.io/api/gh'
       headers:
-        authorization: "token #{@codecovToken}"
+        authorization: "token #{@codecov.token}"
       uri: pathname,
       method,
       json

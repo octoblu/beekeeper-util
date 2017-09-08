@@ -9,15 +9,15 @@ parseTag = (tag) =>
 class BeekeeperService
   constructor: ({ config }) ->
     throw new Error 'Missing config argument' unless config?
-    { @beekeeperUri, @beekeeperEnabled } = config
-    if @beekeeperEnabled
-      throw new Error 'Missing beekeeperUri in config' unless @beekeeperUri?
-    debug 'using beekeeperUri', { @beekeeperUri, @beekeeperEnabled }
+    { @beekeeper } = config
+    if @beekeeper.enabled
+      throw new Error 'Missing beekeeper.uri in config' unless @beekeeper.uri?
+    debug 'using beekeeper.uri', { @beekeeper }
 
   create: ({ owner, repo, tag }, callback) =>
-    return callback null unless @beekeeperEnabled
+    return callback null unless @beekeeper.enabled
     options =
-      baseUrl: @beekeeperUri
+      baseUrl: @beekeeper.uri
       uri: "/deployments/#{owner}/#{repo}/#{parseTag(tag)}"
       json: true
     debug 'create options', options
@@ -29,9 +29,9 @@ class BeekeeperService
       callback()
 
   delete: ({ owner, repo, tag }, callback) =>
-    return callback null unless @beekeeperEnabled
+    return callback null unless @beekeeper.enabled
     options =
-      baseUrl: @beekeeperUri
+      baseUrl: @beekeeper.uri
       uri: "/deployments/#{owner}/#{repo}/#{parseTag(tag)}"
       json: true
     debug 'delete options', options
@@ -42,7 +42,7 @@ class BeekeeperService
       callback()
 
   getTag: ({ owner, repo, tag, filter }, callback) =>
-    return callback null unless @beekeeperEnabled
+    return callback null unless @beekeeper.enabled
     @_getTag { owner, repo, tag, filter }, (error, deployment) =>
       return callback error if error?
       return callback null, deployment, deployment if tag == 'latest'
@@ -53,9 +53,9 @@ class BeekeeperService
         callback null, deployment, latest
 
   tagDeployment: ({ owner, repo, tag, tagName }, callback) =>
-    return callback null unless @beekeeperEnabled
+    return callback null unless @beekeeper.enabled
     options =
-      baseUrl: @beekeeperUri
+      baseUrl: @beekeeper.uri
       uri: "/deployments/#{owner}/#{repo}/#{parseTag(tag)}/tags"
       json: { tagName }
     debug 'tag deployment options', options
@@ -68,9 +68,9 @@ class BeekeeperService
       callback()
 
   update: ({ owner, repo, tag, docker_url }, callback) =>
-    return callback null unless @beekeeperEnabled
+    return callback null unless @beekeeper.enabled
     options =
-      baseUrl: @beekeeperUri
+      baseUrl: @beekeeper.uri
       uri: "/deployments/#{owner}/#{repo}/#{parseTag(tag)}"
       json: { docker_url }
     debug 'update options', options
@@ -82,9 +82,9 @@ class BeekeeperService
       callback()
 
   webhook: ({ owner, repo, tag, ci_passing, type }, callback) =>
-    return callback null unless @beekeeperEnabled
+    return callback null unless @beekeeper.enabled
     options =
-      baseUrl: @beekeeperUri
+      baseUrl: @beekeeper.uri
       uri: "/webhooks/#{type}/#{owner}/#{repo}"
       json: { tag, ci_passing }
     debug 'update options', options
@@ -97,7 +97,7 @@ class BeekeeperService
 
   _getTag: ({ owner, repo, tag, filter }, callback) =>
     options =
-      baseUrl: @beekeeperUri
+      baseUrl: @beekeeper.uri
       uri: "/deployments/#{owner}/#{repo}/#{parseTag(tag)}"
       json: true
       qs: { tags: filter }
