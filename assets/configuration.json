@@ -1,125 +1,125 @@
 [
   {
     "key": "beekeeper.enabled",
-    "env": ["BEEKEEPER_ENABLED"],
+    "env": "BEEKEEPER_ENABLED",
     "type": "boolean",
     "default": true
   },
   {
     "key": "project.name",
-    "env": ["BEEKEEPER_PROJECT_REPO_NAME"],
+    "env": "BEEKEEPER_PROJECT_REPO_NAME",
     "type": "string"
   },
   {
     "key": "project.owner",
-    "env": ["BEEKEEPER_PROJECT_OWNER"],
+    "env": "BEEKEEPER_PROJECT_OWNER",
     "type": "string",
     "default": "octoblu"
   },
   {
     "key": "project.versionFileName",
-    "env": ["BEEKEEPER_PROJECT_VERSION_FILE_NAME"],
+    "env": "BEEKEEPER_PROJECT_VERSION_FILE_NAME",
     "type": "string",
     "default": "VERSION"
   },
   {
     "key": "project.version",
-    "env": ["BEEKEEPER_PROJECT_VERSION"],
+    "env": "BEEKEEPER_PROJECT_VERSION",
     "type": "string",
     "default": "1.0.0"
   },
   {
     "key": "project.language",
-    "env": ["BEEKEEPER_PROJECT_LANGUAGE"],
+    "env": "BEEKEEPER_PROJECT_LANGUAGE",
     "type": "string",
     "default": "generic"
   },
   {
     "key": "beekeeper.uri",
-    "env": ["BEEKEEPER_URI"],
+    "env": "BEEKEEPER_URI",
     "type": "url"
   },
   {
     "key": "github.token",
-    "env": ["BEEKEEPER_GITHUB_TOKEN"],
+    "env": "BEEKEEPER_GITHUB_TOKEN",
     "type": "string"
   },
   {
     "key": "github.release.enabled",
-    "env": ["BEEKEEPER_GITHUB_RELEASE_ENABLED"],
+    "env": "BEEKEEPER_GITHUB_RELEASE_ENABLED",
     "type": "boolean",
     "default": true
   },
   {
     "key": "github.release.draft",
-    "env": ["BEEKEEPER_GITHUB_RELEASE_DRAFT"],
+    "env": "BEEKEEPER_GITHUB_RELEASE_DRAFT",
     "type": "boolean",
     "default": false
   },
   {
     "key": "github.release.prerelease",
-    "env": ["BEEKEEPER_GITHUB_RELEASE_PRERELEASE"],
+    "env": "BEEKEEPER_GITHUB_RELEASE_PRERELEASE",
     "type": "boolean",
     "default": false
   },
   {
     "key": "codecov.enabled",
-    "env": ["BEEKEEPER_CODECOV_ENABLED"],
+    "env": "BEEKEEPER_CODECOV_ENABLED",
     "type": "boolean",
     "default": true
   },
   {
     "key": "codecov.token",
-    "env": ["BEEKEEPER_CODECOV_TOKEN"],
+    "env": "BEEKEEPER_CODECOV_TOKEN",
     "type": "string"
   },
   {
     "key": "codefresh.enabled",
-    "env": ["BEEKEEPER_CODEFRESH_ENABLED"],
+    "env": "BEEKEEPER_CODEFRESH_ENABLED",
     "type": "boolean",
     "default": true
   },
   {
     "key": "codefresh.token",
-    "env": ["BEEKEEPER_CODEFRESH_TOKEN"],
+    "env": "BEEKEEPER_CODEFRESH_TOKEN",
     "type": "string"
   },
   {
     "key": "quay.enabled",
-    "env": ["BEEKEEPER_QUAY_ENABLED"],
+    "env": "BEEKEEPER_QUAY_ENABLED",
     "type": "boolean",
     "default": true
   },
   {
     "key": "quay.token",
-    "env": ["BEEKEEPER_QUAY_TOKEN"],
+    "env": "BEEKEEPER_QUAY_TOKEN",
     "type": "string"
   },
   {
     "key": "travis.enabled",
-    "env": ["BEEKEEPER_TRAVIS_ENABLED"],
+    "env": "BEEKEEPER_TRAVIS_ENABLED",
     "type": "boolean",
     "default": true
   },
   {
     "key": "travis.token",
-    "env": ["BEEKEEPER_GITHUB_TOKEN"],
+    "env": "BEEKEEPER_GITHUB_TOKEN",
     "type": "string"
   },
   {
     "key": "dockerHub.enabled",
-    "env": ["BEEKEEPER_DOCKERHUB_ENABLED"],
+    "env": "BEEKEEPER_DOCKERHUB_ENABLED",
     "type": "boolean",
     "default": true
   },
   {
     "key": "dockerHub.username",
-    "env": ["BEEKEEPER_DOCKER_HUB_USERNAME", "DOCKER_HUB_USERNAME"],
+    "env": "BEEKEEPER_DOCKER_HUB_USERNAME",
     "type": "string"
   },
   {
     "key": "dockerHub.password",
-    "env": ["BEEKEEPER_DOCKER_HUB_PASSWORD", "DOCKER_HUB_PASSWORD"],
+    "env": "BEEKEEPER_DOCKER_HUB_PASSWORD",
     "type": "string"
   }
 ]
