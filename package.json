@@ -1,8 +1,10 @@
 {
   "name": "beekeeper-util",
-  "version": "10.0.2",
+  "version": "11.0.0",
   "description": "CLI utility for managing the beekeeper-service",
-  "keywords": ["beekeeper"],
+  "keywords": [
+    "beekeeper"
+  ],
   "homepage": "https://github.com/octoblu/beekeeper-util",
   "bugs": "https://github.com/octoblu/beekeeper-util/issues",
   "author": {
@@ -82,7 +84,13 @@
   "license": "MIT",
   "nyc": {
     "cache": true,
-    "reporter": ["text-summary", "lcov", "json"],
-    "extension": [".coffee"]
+    "reporter": [
+      "text-summary",
+      "lcov",
+      "json"
+    ],
+    "extension": [
+      ".coffee"
+    ]
   }
 }
