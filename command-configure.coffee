@@ -15,7 +15,7 @@ packageJSON       = require './package.json'
 program
   .version packageJSON.version
   .usage '[options] <project-name>'
-  .option '-o, --owner <octoblu>', 'Project owner'
+  .option '-o, --owner <repo>', 'Project owner'
 
 class Command
   constructor: (@config) ->
@@ -32,8 +32,8 @@ class Command
   parseOptions: =>
     program.parse process.argv
 
-    repo = program.args[0] || @config.name
-    owner = program.owner || @config.owner
+    repo = program.args[0] || @config.project.name
+    owner = program.owner || @config.project.owner
 
     return {
       repo,
@@ -43,14 +43,13 @@ class Command
   run: =>
     @githubService.getRepo { @repo, @owner }, (error, githubRepo) =>
       return @die error if error?
-
       @isPrivate = githubRepo.private
-
       async.series [
         async.apply @travisService.configure, { @repo, @owner, @isPrivate }
         async.apply @codecovService.configure, { @repo, @owner, @isPrivate }
         async.apply @codecovService.configureEnv, { @repo, @owner, @isPrivate }
         async.apply @projectService.configure, { @isPrivate }
+        async.apply @projectService.initVersionFile
         async.apply @quayService.configure, { @repo, @owner, @isPrivate }
         async.apply @dockerHubService.configure, { @repo, @owner, @isPrivate }
         async.apply @codefreshService.configure, { @repo, @owner, @isPrivate }

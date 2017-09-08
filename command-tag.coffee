@@ -1,6 +1,7 @@
 program     = require 'commander'
 Confirm     = require 'prompt-confirm'
 colors      = require 'colors/safe'
+semver      = require 'semver'
 packageJSON = require './package.json'
 
 BeekeeperService = require './src/beekeeper-service'
@@ -10,7 +11,7 @@ program
   .usage '[options] <tag>'
   .option '-r, --repo <repo-name>', 'Project repo name. Defaults to package.name'
   .option '-t, --tag <tag>', 'Project version (not the tag on the deployment). Defaults to package.version'
-  .option '-o, --owner <octoblu>', 'Project owner'
+  .option '-o, --owner <repo>', 'Project owner'
   .option '--prompt', 'Prompt before tagging. Defaults to false'
 
 class Command
@@ -23,9 +24,9 @@ class Command
     tagName = program.args[0]
 
     { prompt } = program
-    repo = program.repo ? @config.name
-    owner = program.owner ? @config.owner
-    tag = program.tag ? @config.version
+    repo = program.repo || @config.project.name
+    owner = program.owner || @config.project.owner
+    tag = semver.valid(program.tag) || @config.project.version
 
     @dieHelp new Error 'Missing tag argument' unless tagName?
     @dieHelp new Error 'Must specify a repo' unless repo?
@@ -34,6 +35,7 @@ class Command
     return { repo, owner, tag, tagName, prompt }
 
   run: =>
+    return @die new Error('Beekeeper must be enabled') unless @config.beekeeper.enabled
     { repo, owner, tag, tagName, @prompt } = @parseOptions()
     @beekeeperService.getTag { repo, owner, tag }, (error, deployment) =>
       return @die error if error?
@@ -53,11 +55,11 @@ class Command
     process.exit(0)
 
   printSuccess: ({ tag, tagName })=>
-    console.log("Tagged #{tag} with #{tagName}")
+    console.log("Tagged v#{tag} with #{tagName}")
     process.exit(0)
 
   printDeploymentMissing: ({ tag })=>
-    console.log("Deployment for #{tag} is missing")
+    console.log("Deployment for v#{tag} is missing")
     process.exit(1)
 
   printUnwilling: =>
@@ -75,7 +77,7 @@ class Command
     console.log ''
     @confirm "Did you test it?", =>
       @confirm "Are you sure '#{tagName}' is ready?", =>
-        console.log bold "Tagging version #{tag} with #{tagName}"
+        console.log bold "Tagging version v#{tag} with #{tagName}"
         callback()
 
   confirm: (message, callback) =>

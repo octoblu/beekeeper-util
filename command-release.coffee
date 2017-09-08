@@ -1,51 +1,90 @@
 _       = require 'lodash'
-colors  = require 'colors'
 program = require 'commander'
+semver  = require 'semver'
+async   = require 'async'
+Spinner = require './src/spinner'
 
-GithubService = require './src/github-service.coffee'
-GitService    = require './src/git-service.coffee'
+GithubService    = require './src/github-service.coffee'
+GitService       = require './src/git-service.coffee'
+BeekeeperService = require './src/beekeeper-service.coffee'
+ProjectService   = require './src/project-service.coffee'
 
 packageJSON   = require './package.json'
-
-list = (val) -> _.map _.split(val, ','), _.trim
 
 program
   .version packageJSON.version
   .usage '[options] <message>'
   .option '-r, --repo <repo-name>', 'Project repo name'
-  .option '-o, --owner <octoblu>', 'Project owner'
-  .option '-t, --tag <tag>', 'Project version'
-  .option '-a, --authors <authors>', 'a list of authors', list
+  .option '-o, --owner <repo>', 'Project owner'
+  .option '-t, --tag <tag>', 'Override project version'
+  .option '--init', 'Set version 1.0.0'
+  .option '--major', 'Bump with semver major version'
+  .option '--premajor', 'Bump with semver premajor version'
+  .option '--minor', 'Bump with semver minor version'
+  .option '--preminor', 'Bump with semver preminor version'
+  .option '--patch', 'Bump with semver patch version. Default version release.'
+  .option '--prepatch', 'Bump with semver prepatch version'
+  .option '--prerelease [preid]', 'Bump with semver prerelease version, value is <tag>-<preid>'
 
 class Command
   constructor: (@config) ->
-    # process.on 'uncaughtException', @die
-    @githubService = new GithubService { @config }
-    @gitService = new GitService { @config }
+    @spinner = new Spinner()
+    @spinner.start("Starting Beekeeper")
+    process.on 'uncaughtException', @die
+    @githubService = new GithubService { @config, @spinner }
+    @gitService = new GitService { @config, @spinner }
+    @beekeeperService = new BeekeeperService { @config, @spinner }
+    @projectService = new ProjectService { @config, @spinner }
 
   parseOptions: =>
     program.parse process.argv
-    message = program.args[0]
-    repo = program.repo || @config.name
-    owner = program.owner || @config.owner
-    tag = program.tag || @config.version
-    authors = _.map program.authors, (initial) => @config.authors[initial]
+    repo = program.repo || @config.project.name
+    owner = program.owner || @config.project.owner
+    tag = @getNewTag program
+    release = @getRelease program
+    message = _.trim "v#{tag} #{program.args[0] || ''}"
     return {
       repo,
       owner,
       tag,
-      authors,
-      message
+      message,
+      release
     }
 
+  getNewTag: (program) =>
+    return semver.valid program.tag if semver.valid program.tag
+    tag = @config.project.version
+    release = @getRelease program
+    return '1.0.0' if release == 'init'
+    preid = program.prerelease
+    return semver.inc(tag, release, preid)
+
+  getRelease: (program) =>
+    return 'init' if program['init']
+    return 'major' if program['major']
+    return 'premajor' if program['premajor']
+    return 'minor' if program['minor']
+    return 'preminor' if program['preminor']
+    return 'patch' if program['patch']
+    return 'prepatch' if program['prepatch']
+    return 'prerelease' if program['prerelease']
+    return 'patch'
+
   run: =>
-    { authors, message, tag } = @parseOptions()
-    @gitService.check { tag }, (error) =>
+    { message, tag, owner, repo, release } = @parseOptions()
+    @spinner.log("Releasing v#{tag}", '🐝')
+    @spinner.start("Beekeeping")
+    async.series [
+      async.apply @gitService.check, { tag }
+      async.apply @projectService.initVersionFile
+      async.apply @projectService.modifyVersion, { tag }
+      async.apply @gitService.release, { message, tag }
+      async.apply @beekeeperService.create, { owner, repo, tag }
+      async.apply @githubService.createRelease, { owner, repo, tag, message, release }
+    ], (error) =>
       return @die error if error?
-      @gitService.release { authors, message, tag }, (error) =>
-        return @die error if error?
-        console.log colors.green('RELEASED!')
-        @die()
+      @spinner.succeed("Shipped it!")
+      @die()
 
   dieHelp: (error) =>
     console.error error.toString()
@@ -54,7 +93,9 @@ class Command
 
   die: (error) =>
     return process.exit(0) unless error?
-    console.error error.toString()
+    @spinner.warn()
+    @spinner.fail error.toString()
+    console.error error.stack
     process.exit 1
 
 module.exports = Command

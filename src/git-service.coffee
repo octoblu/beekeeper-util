@@ -1,36 +1,37 @@
-{ check, isGit }  = require 'git-state'
-simpleGit = require 'simple-git'
-_ = require 'lodash'
-path = require 'path'
-debug = require('debug')('beekeeper-util:git-service')
+{ check, isGit } = require 'git-state'
+simpleGit        = require 'simple-git'
+semver           = require 'semver'
+path             = require 'path'
+debug            = require('debug')('beekeeper-util:git-service')
+which            = require 'which'
 
 class GitService
-  constructor: ({ config }) ->
+  constructor: ({ config, @spinner }) ->
     throw new Error "GitService missing config argument" unless config?
-    { @projectRoot } = config
-    throw new Error "GitService requires projectRoot in config" unless @projectRoot?
+    { @project } = config
+    throw new Error "GitService requires project in config" unless @project.root?
 
   check: ({ tag }, callback) =>
-    isGit @projectRoot, (isGitRepo) =>
+    isGit @project.root, (isGitRepo) =>
       return callback new Error('Must be a git repo') unless isGitRepo
-      check @projectRoot, (error, result) =>
+      check @project.root, (error, result) =>
         return callback error if error?
         { branch } = result
-        unless branch == 'master'
-          return callback new Error 'Branch must be master'
-        @_git().tags (error, tags) =>
-          return callback error if error?
-          return callback new Error('Tag already exists') if tag in tags.all
-          callback null
+        return callback new Error 'Branch must be master' unless branch == 'master'
+        @_validateTag { tag }, callback
 
-  release: ({ authors, message, tag }, callback) =>
+  release: ({ message, tag }, callback) =>
     git = @_git()
-    @_setAuthors git, authors
-    message = @_buildMessage { message, tag }
-    git.add path.join(@projectRoot, '*')
+    @spinner?.start "Git: Committing"
+    git.add path.join(@project.root, '*')
     git.commit message, (error) =>
       return callback error if error?
-      @_tagAndPush git, tag, callback
+      @spinner?.log 'Git: Committed'
+      @spinner?.start 'Git: Tag and push'
+      @_tagAndPush git, tag, (error) =>
+        return callback error if error?
+        @spinner?.log 'Git: Tagged and pushed'
+        callback()
 
   pull: (callback) =>
     git = @_git()
@@ -42,25 +43,25 @@ class GitService
       return callback error if error?
       git.log callback
 
-  _setAuthors: (git, authors) =>
-    return if _.isEmpty authors
-    names = _.join _.map(authors, 'name'), ', '
-    emails = _.join _.map(authors, 'email'), ', '
-    debug('authors', { names, emails })
-    git.addConfig 'user.name', names
-    git.addConfig 'user.email', emails
-
   _tagAndPush: (git, tag, callback) =>
-    git.tag [tag], (error) =>
+    git.tag ["v#{tag}"], (error) =>
       return callback error if error?
       git.push (error) =>
         return callback error if error?
         git.pushTags callback
 
-  _buildMessage: ({ message, tag }) =>
-    return "#{tag}" unless message?
-    return "#{tag} #{message}"
+  _git: () =>
+    git = simpleGit @project.root
+    gitTogether = which.sync('git-together', {nothrow: true})
+    git.customBinary(gitTogether) if gitTogether?
+    return git
 
-  _git: () => simpleGit @projectRoot
+  _validateTag: ({ tag }, callback) =>
+    return callback new Error "Invalid tag v#{tag}" unless semver.valid tag
+    @_git().tags (error, tags) =>
+      return callback error if error?
+      debug 'found tags', tags
+      return callback new Error "Tag #{tag} already exists" if "v#{tag}" in tags.all
+      callback null
 
 module.exports = GitService

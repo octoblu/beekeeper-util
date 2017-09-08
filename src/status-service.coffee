@@ -1,7 +1,5 @@
 _           = require 'lodash'
 get         = require 'lodash/fp/get'
-replace     = require 'lodash/fp/replace'
-isEqual     = require 'lodash/fp/isEqual'
 url         = require 'url'
 colors      = require 'colors'
 moment      = require 'moment'
@@ -9,9 +7,9 @@ path        = require 'path'
 request     = require 'request'
 cliClear    = require 'cli-clear'
 notifier    = require 'node-notifier'
+semver      = require 'semver'
 
 BeekeeperService = require './beekeeper-service'
-getVersion       = replace('v', '')
 
 class StatusService
   constructor: ({ options, @config }) ->
@@ -44,7 +42,7 @@ class StatusService
     @beekeeperService.getTag { @repo, @owner, @tag, @filter }, (error, deployment, latest) =>
       return @die error if error?
       return @printJSON deployment if @json
-      @printHeader "#{@owner}/#{@repo}:#{@tag}" unless deployment?
+      @printHeader "#{@owner}/#{@repo}:v#{@tag}" unless deployment?
       return @printNotFound() unless deployment?
       @printDeployHeader { latest, deployment }
       if deployment.ci_passing? and not deployment.ci_passing
@@ -76,7 +74,7 @@ class StatusService
       sound   = 'Funk'
     notifier.notify {
       title: 'Beekeeper'
-      subtitle: "#{@repo}:#{@tag}"
+      subtitle: "#{@repo}:v#{@tag}"
       message: message
       icon: path.join(__dirname, '..', 'assets', 'beekeeper.png')
       sound: sound
@@ -97,9 +95,8 @@ class StatusService
   checkVersion: (callback) =>
     request.get @serviceUrl, { json: true }, (error, response, body) =>
       return callback error if error?
-      currentVersion = getVersion(get('version', body))
-      matches = isEqual(getVersion(@tag), currentVersion)
-      callback null, matches, currentVersion
+      currentVersion = semver.clean(get('version', body))
+      callback null, semver.eq(@tag, currentVersion), currentVersion
 
   printJSON: (deployment) =>
     console.log JSON.stringify deployment, null, 2
@@ -111,8 +108,8 @@ class StatusService
 
   printDeployHeader: ({ latest, deployment }) =>
     return unless deployment?
-    latestSlug = "#{latest.owner_name}/#{latest.repo_name}:#{latest.tag}" if latest?
-    deploymentSlug = "#{deployment.owner_name}/#{deployment.repo_name}:#{deployment.tag}"
+    latestSlug = "#{latest.owner_name}/#{latest.repo_name}:v#{semver.clean(latest.tag)}" if latest?
+    deploymentSlug = "#{deployment.owner_name}/#{deployment.repo_name}:v#{semver.clean(deployment.tag)}"
     console.log ''
     colorTitle = (str='') =>
       return colors.cyan(str)
@@ -127,7 +124,7 @@ class StatusService
     unless latest?
       console.log colorTitle('There is no latest version, maybe it has never been deployed?')
       console.log colorTitle('Desired'), colorValue(deploymentSlug)
-    else if deployment.tag == latest.tag
+    else if semver.eq(deployment.tag, latest.tag)
       console.log colorTitle('Running'), colorValue(deploymentSlug)
     else
       console.log colorTitle('Running'), colorValue(latestSlug)
@@ -147,7 +144,7 @@ class StatusService
   printVersionResult: ({ currentVersion }) =>
     console.log ''
     message = "Service is running v#{currentVersion}!"
-    if getVersion(currentVersion) == getVersion(@tag)
+    if semver.eq(currentVersion, @tag)
       console.log colors.green(message)
     else
       console.log colors.white(message)

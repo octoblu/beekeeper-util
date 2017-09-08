@@ -5,11 +5,13 @@ debug   = require('debug')('beekeeper-util:codefresh-service')
 class CodefreshService
   constructor: ({ config }) ->
     throw new Error 'Missing config argument' unless config?
-    { @codefreshToken, @beekeeperUri } = config
-    throw new Error 'Missing codefreshToken in config' unless @codefreshToken?
-    throw new Error 'Missing beekeeperUri in config' unless @beekeeperUri?
+    { @codefresh, @beekeeper } = config
+    if @codefresh.enabled
+      throw new Error 'Missing codefresh.token in config' unless @codefresh.token?
+    throw new Error 'Missing beekeeper.uri in config' unless @beekeeper.uri?
 
   configure: ({ @repo, @owner, @isPrivate }, callback) =>
+    return callback null unless @codefresh.enabled
     debug 'setting up codefresh', { @repo, @owner, @isPrivate }
     @_ensureService (error) =>
       return callback error if error?
@@ -65,7 +67,7 @@ class CodefreshService
     options = {
       baseUrl: 'https://g.codefresh.io/api'
       headers:
-        'x-access-token': @codefreshToken
+        'x-access-token':  @codefresh.token
       uri: pathname,
       method,
       json
@@ -90,7 +92,7 @@ class CodefreshService
     _.set service, 'env', [
       {
         key: 'BEEKEEPER_URI'
-        value: @beekeeperUri
+        value: @beekeeper.uri
         encrypted: true
       }
     ]

@@ -1,4 +1,5 @@
 program     = require 'commander'
+semver      = require 'semver'
 packageJSON = require './package.json'
 
 StatusService    = require './src/status-service'
@@ -12,7 +13,7 @@ program
   .option '-j, --json', 'Print JSON'
   .option '-l, --latest', 'Override the tag with "latest"'
   .option '-n, --notify', 'Notify when passing'
-  .option '-o, --owner <octoblu>', 'Project owner'
+  .option '-o, --owner <repo>', 'Project owner'
   .option '-t, --tag <tag>', 'Project version (not the tag on the deployment). Defaults to package.version'
   .option '-u, --service-url <url>', 'Poll <service-url>/version for the updated version'
   .option '-w, --watch', 'Watch deployment'
@@ -26,7 +27,6 @@ class Command
     program.parse process.argv
     {
       json
-      tag
       watch
       latest
       exit
@@ -34,9 +34,9 @@ class Command
       serviceUrl
       filter
     } = program
-    repo = program.args[0] || @config.name
-    owner = program.owner ? @config.owner
-    tag ?= @config.version
+    repo = program.args[0] || @config.project.name
+    owner = program.owner || @config.project.owner
+    tag = semver.valid(program.tag) || @config.project.version
     tag ?= 'latest'
     tag = 'latest' if latest?
 
@@ -55,6 +55,7 @@ class Command
     }
 
   run: =>
+    return @die new Error('Beekeeper must be enabled') unless @config.beekeeper.enabled
     @statusService.run()
 
   dieHelp: (error) =>

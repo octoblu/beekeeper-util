@@ -1,7 +1,7 @@
 program     = require 'commander'
+semver      = require 'semver'
 packageJSON = require './package.json'
 
-Config           = require './src/config'
 BeekeeperService = require './src/beekeeper-service'
 
 program
@@ -9,20 +9,19 @@ program
   .usage '[options] <project-name>'
   .option '-d, --docker-url <docker-url>', '(required) Docker URL to update'
   .option '-t, --tag <tag>', 'Project version (not the tag on the deployment). Defaults to package.version'
-  .option '-o, --owner <octoblu>', 'Project owner'
+  .option '-o, --owner <repo>', 'Project owner'
 
 class Command
-  constructor: ->
+  constructor: (@config) ->
     process.on 'uncaughtException', @die
-    @config = new Config()
     @beekeeperService = new BeekeeperService { @config }
 
   parseOptions: =>
     program.parse process.argv
-    repo = program.args[0] || @config.name
+    repo = program.args[0] || @config.project.name
 
-    owner = program.owner ? @config.owner
-    tag = program.tag ? @config.version
+    owner = program.owner || @config.project.owner
+    tag = semver.valid(program.tag) || @config.project.version
     docker_url = program.dockerUrl
 
     @dieHelp new Error 'Missing repo argument' unless repo?
@@ -31,6 +30,7 @@ class Command
     return { repo, owner, tag, docker_url }
 
   run: =>
+    return @die new Error('Beekeeper must be enabled') unless @config.beekeeper.enabled
     {repo, owner, tag, docker_url } = @parseOptions()
     @beekeeperService.update { repo, owner, tag, docker_url }, (error) =>
       return @die error if error?

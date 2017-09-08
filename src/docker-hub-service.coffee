@@ -7,21 +7,34 @@ debug        = require('debug')('beekeeper-util:docker-hub-service')
 class DockerHubService
   constructor: ({ config }) ->
     throw new Error 'Missing config argument' unless config?
-    { dockerHubToken, beekeeperUri } = config
-    throw new Error 'Missing dockerHubToken in config' unless dockerHubToken?
-    throw new Error 'Missing beekeeperUri in config' unless beekeeperUri?
-    dockerHubApi.setLoginToken dockerHubToken
-    urlParts = url.parse beekeeperUri
+    {
+      @beekeeper,
+      @dockerHub
+    } = config
+    if @dockerHub.enabled
+      throw new Error 'Missing dockerHub.username in config' unless @dockerHub.username?
+      throw new Error 'Missing dockerHub.password in config' unless @dockerHub.password?
+    if @beekeeper.enabled
+      throw new Error 'Missing beekeeper.uri in config' unless @beekeeper.uri?
+    urlParts = url.parse @beekeeper.uri
     _.set urlParts, 'slashes', true
     _.set urlParts, 'pathname', '/webhooks/docker:hub'
     @webhookUrl = url.format urlParts
     debug 'webhookUrl', @webhookUrl
 
   configure: ({ @repo, @owner, @isPrivate, @noWebhook }, callback) =>
+    return callback null unless @dockerHub.enabled
     debug 'setting up docker', { @repo, @owner, @isPrivate, @noWebhook }
-    @_ensureRepository (error) =>
-      return callback error if error?
-      @_ensureWebhook callback
+    dockerHubApi.login @dockerHub.username, @dockerHub.password
+      .then (info) =>
+        dockerHubApi.setLoginToken info.token
+        @_ensureRepository (error) =>
+          return callback error if error?
+          @_ensureWebhook callback
+        return
+      .catch (error) =>
+        callback error
+    return
 
   _ensureRepository: (callback) =>
     @_getRepository (error, repo) =>
@@ -31,6 +44,7 @@ class DockerHubService
         @_createRepository callback
 
   _ensureWebhook: (callback) =>
+    return callback null unless @beekeeper.enabled
     return callback null if @noWebhook
     @_createWebhookV2 (error, webhookId) =>
       return callback error if error?

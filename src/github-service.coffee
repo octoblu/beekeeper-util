@@ -2,10 +2,10 @@ request           = require 'request'
 debug             = require('debug')('beekeeper-util:github-service')
 
 class GithubService
-  constructor: ({ config }) ->
+  constructor: ({ config, @spinner }) ->
     throw new Error 'Missing config argument' unless config?
-    { @githubToken } = config
-    throw new Error 'Missing githubToken in config' unless @githubToken?
+    { @github } = config
+    throw new Error 'Missing github.token in config' unless @github.token?
 
   getRepo: ({ repo, owner }, callback) =>
     debug 'checking if repo exists'
@@ -14,12 +14,33 @@ class GithubService
       debug 'repo', repo
       callback null, repo
 
+  createRelease: ({ repo, owner, tag, message, release }, callback) =>
+    return callback null unless @github.release.enabled
+    options = {
+      pathname: "/repos/#{owner}/#{repo}/releases"
+      method: 'POST'
+      json:
+        tag_name: "v#{tag}"
+        target_commitish: 'master'
+        name: "v#{tag}"
+        body: message
+        draft: @github.release.draft || false
+        prerelease: @github.release.prerelease || release == 'prerelease'
+    }
+    @spinner?.start "Github: Creating release"
+    debug 'creating github release', options
+    @_request options, (error, repo) =>
+      return callback error if error?
+      debug 'repo', repo
+      @spinner?.log "Github: Released"
+      callback null, repo
+
   _request: ({ method='GET', pathname, json=true, body }, callback) =>
     throw new Error 'GithubService->_request: requires pathname' unless pathname?
     options = {
       baseUrl: 'https://api.github.com'
       headers:
-        authorization: "token #{@githubToken}"
+        authorization: "token #{@github.token}"
         'User-Agent': 'beekeeper-util'
       uri: pathname,
       method,
@@ -35,9 +56,9 @@ class GithubService
       return callback error if error?
       debug 'got response', response.statusCode
 
-      if response.statusCode > 499
+      if response.statusCode > 399
         debug response.statusCode, body
-        return callback new Error "Unexpected Response #{response.statusCode}"
+        return callback new Error "Github: Unexpected response #{response.statusCode}"
       callback null, body
 
 module.exports = GithubService
