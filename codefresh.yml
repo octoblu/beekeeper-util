@@ -5,6 +5,7 @@ steps:
     type: build
     description: Building the image...
     dockerfile: Dockerfile
+    image_name: ${{CF_REPO_OWNER}}/${{CF_REPO_NAME}}
     tag: 'latest'
 
   push_to_registry_latest:
