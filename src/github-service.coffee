@@ -2,7 +2,7 @@ request           = require 'request'
 debug             = require('debug')('beekeeper-util:github-service')
 
 class GithubService
-  constructor: ({ config }) ->
+  constructor: ({ config, @spinner }) ->
     throw new Error 'Missing config argument' unless config?
     { @github } = config
     throw new Error 'Missing github.token in config' unless @github.token?
@@ -27,10 +27,12 @@ class GithubService
         draft: @github.release.draft || false
         prerelease: @github.release.prerelease || release == 'prerelease'
     }
+    @spinner?.start "Github: Creating release"
     debug 'creating github release', options
     @_request options, (error, repo) =>
       return callback error if error?
       debug 'repo', repo
+      @spinner?.log "Github: Released"
       callback null, repo
 
   _request: ({ method='GET', pathname, json=true, body }, callback) =>
@@ -38,7 +40,7 @@ class GithubService
     options = {
       baseUrl: 'https://api.github.com'
       headers:
-        authorization: "token #{@github.tok2en}"
+        authorization: "token #{@github.token}"
         'User-Agent': 'beekeeper-util'
       uri: pathname,
       method,
@@ -56,7 +58,7 @@ class GithubService
 
       if response.statusCode > 399
         debug response.statusCode, body
-        return callback new Error "Received unexpected status code from Github: #{response.statusCode}"
+        return callback new Error "Github: Unexpected response #{response.statusCode}"
       callback null, body
 
 module.exports = GithubService

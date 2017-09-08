@@ -9,7 +9,7 @@ semverRegex = require 'semver-regex'
 debug  = require('debug')('beekeeper-util:project-service')
 
 class ProjectService
-  constructor: ({ config }) ->
+  constructor: ({ config, @spinner }) ->
     throw new Error 'Missing config argument' unless config?
     {
       @beekeeper,
@@ -46,6 +46,7 @@ class ProjectService
   modifyVersion: ({ tag }, callback) =>
     version = semver.clean(tag)
     debug 'modifyVersion', { tag, version }
+    @spinner?.start "Project: Setting version v#{tag}"
     fs.readFile @versionFile, 'utf8', (error, contents) =>
       return callback error if error?
       try

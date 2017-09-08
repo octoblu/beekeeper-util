@@ -7,7 +7,7 @@ parseTag = (tag) =>
   return "v#{tag}"
 
 class BeekeeperService
-  constructor: ({ config }) ->
+  constructor: ({ config, @spinner }) ->
     throw new Error 'Missing config argument' unless config?
     { @beekeeper } = config
     if @beekeeper.enabled
@@ -20,12 +20,14 @@ class BeekeeperService
       baseUrl: @beekeeper.uri
       uri: "/deployments/#{owner}/#{repo}/#{parseTag(tag)}"
       json: true
+    @spinner?.start "Beekeeper: Creating release"
     debug 'create options', options
     request.post options, (error, response, body) =>
       return callback error if error?
       if response.statusCode > 399
         message = _.get body, 'error', 'Error from beekeeper service'
-        return callback new Error message
+        return callback new Error "Beekeeper: #{message}"
+      @spinner?.log "Beekeeper: Released"
       callback()
 
   delete: ({ owner, repo, tag }, callback) =>

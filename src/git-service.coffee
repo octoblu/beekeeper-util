@@ -6,7 +6,7 @@ debug            = require('debug')('beekeeper-util:git-service')
 which            = require 'which'
 
 class GitService
-  constructor: ({ config }) ->
+  constructor: ({ config, @spinner }) ->
     throw new Error "GitService missing config argument" unless config?
     { @project } = config
     throw new Error "GitService requires project in config" unless @project.root?
@@ -22,10 +22,16 @@ class GitService
 
   release: ({ message, tag }, callback) =>
     git = @_git()
+    @spinner?.start "Git: Committing"
     git.add path.join(@project.root, '*')
     git.commit message, (error) =>
       return callback error if error?
-      @_tagAndPush git, tag, callback
+      @spinner?.log 'Git: Committed'
+      @spinner?.start 'Git: Tag and push'
+      @_tagAndPush git, tag, (error) =>
+        return callback error if error?
+        @spinner?.log 'Git: Tagged and pushed'
+        callback()
 
   pull: (callback) =>
     git = @_git()

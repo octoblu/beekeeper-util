@@ -2,8 +2,7 @@ _       = require 'lodash'
 program = require 'commander'
 semver  = require 'semver'
 async   = require 'async'
-ora     = require 'ora'
-chalk   = require 'chalk'
+Spinner = require './src/spinner'
 
 GithubService    = require './src/github-service.coffee'
 GitService       = require './src/git-service.coffee'
@@ -29,11 +28,13 @@ program
 
 class Command
   constructor: (@config) ->
+    @spinner = new Spinner()
+    @spinner.start("Starting Beekeeper")
     process.on 'uncaughtException', @die
-    @githubService = new GithubService { @config }
-    @gitService = new GitService { @config }
-    @beekeeperService = new BeekeeperService { @config }
-    @projectService = new ProjectService { @config }
+    @githubService = new GithubService { @config, @spinner }
+    @gitService = new GitService { @config, @spinner }
+    @beekeeperService = new BeekeeperService { @config, @spinner }
+    @projectService = new ProjectService { @config, @spinner }
 
   parseOptions: =>
     program.parse process.argv
@@ -71,39 +72,19 @@ class Command
 
   run: =>
     { message, tag, owner, repo, release } = @parseOptions()
-    spinner = ora()
-    spinner.start("Releasing v#{tag}")
+    @spinner.log("Releasing v#{tag}", '🐝')
+    @spinner.start("Beekeeping")
     async.series [
       async.apply @gitService.check, { tag }
       async.apply @projectService.initVersionFile
-      async.apply @startSpinner, { spinner, text: "Modifying version to v#{tag}" }
       async.apply @projectService.modifyVersion, { tag }
-      async.apply @stopAndPersistSpinner, { spinner }
-      async.apply @startSpinner, { spinner, text: "Creating git release for v#{tag}" }
       async.apply @gitService.release, { message, tag }
-      async.apply @stopAndPersistSpinner, { spinner }
-      async.apply @startSpinner, { spinner, text: "Creating beekeeper release for v#{tag}", enabled: @config.beekeeper.enabled }
       async.apply @beekeeperService.create, { owner, repo, tag }
-      async.apply @stopAndPersistSpinner, { spinner }
-      async.apply @startSpinner, { spinner, text: "Creating github release for v#{tag}", enabled: @config.github.release.enabled }
       async.apply @githubService.createRelease, { owner, repo, tag, message, release }
-      async.apply @stopAndPersistSpinner, { spinner }
     ], (error) =>
-      if error?
-        spinner.fail(error.toString())
-      else
-        spinner.succeed("Released v#{tag}")
+      return @die error if error?
+      @spinner.succeed("Shipped it!")
       @die()
-
-  startSpinner: ({ spinner, text, color, enabled }, callback) =>
-    return callback(null) unless enabled
-    spinner.color = color if color?
-    spinner.start(text)
-    callback null
-
-  stopAndPersistSpinner: ({ spinner }, callback) =>
-    spinner.stopAndPersist({ symbol: chalk.cyan('✔') })
-    callback()
 
   dieHelp: (error) =>
     console.error error.toString()
@@ -112,7 +93,9 @@ class Command
 
   die: (error) =>
     return process.exit(0) unless error?
-    console.error error.toString(), error.stack
+    @spinner.warn()
+    @spinner.fail error.toString()
+    console.error error.stack
     process.exit 1
 
 module.exports = Command
