@@ -1,0 +1,20 @@
+version: '1.0'
+steps:
+
+  build_image:
+    type: build
+    description: Building the image...
+    dockerfile: Dockerfile
+    tag: 'latest'
+
+  push_to_registry_latest:
+    title: Pushing to Docker Registry...
+    type: push
+    candidate: '${{build_image}}'
+    tag: 'latest'
+
+  push_to_registry:
+    title: Pushing to Docker Registry...
+    type: push
+    candidate: '${{build_image}}'
+    tag: ${{CF_BRANCH_TAG_NORMALIZED}}

@@ -6,7 +6,7 @@ debug   = require('debug')('beekeeper-util:quay-service')
 QUAY_BASE_URL='https://quay.io/api/v1'
 
 class QuayService
-  constructor: ({ config }) ->
+  constructor: ({ config, @spinner }) ->
     throw new Error 'Missing config argument' unless config?
     { @quay } = config
     if @quay.enabled
@@ -15,8 +15,10 @@ class QuayService
   configure: ({ @repo, @owner, @isPrivate }, callback) =>
     return callback null unless @quayEnabled
     debug 'setting up quay'
+    @spinner?.start 'Quay: Enabling repo'
     @_repositoryExists (error, exists) =>
       return callback error if error?
+      @spinner?.log 'Quay: Repo enabled'
       return callback null unless exists
       @_clearNotifications callback
 
@@ -39,7 +41,6 @@ class QuayService
       uri: "/repository/#{@owner}/#{@repo}/notification/#{uuid}"
       json: true
 
-    console.log colors.magenta('NOTICE'), colors.white('deleting quay webook')
     @_request options, callback
 
   _clearNotifications: (callback) =>

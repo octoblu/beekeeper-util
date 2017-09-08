@@ -5,7 +5,7 @@ colors       = require 'colors'
 debug        = require('debug')('beekeeper-util:docker-hub-service')
 
 class DockerHubService
-  constructor: ({ config }) ->
+  constructor: ({ config, @spinner }) ->
     throw new Error 'Missing config argument' unless config?
     {
       @beekeeper,
@@ -25,11 +25,14 @@ class DockerHubService
   configure: ({ @repo, @owner, @isPrivate, @noWebhook }, callback) =>
     return callback null unless @dockerHub.enabled
     debug 'setting up docker', { @repo, @owner, @isPrivate, @noWebhook }
+    @spinner?.start 'DockerHub: Enabling repo'
     dockerHubApi.login @dockerHub.username, @dockerHub.password
       .then (info) =>
         dockerHubApi.setLoginToken info.token
         @_ensureRepository (error) =>
           return callback error if error?
+          @spinner?.log 'DockerHub: Repo enabled'
+
           @_ensureWebhook callback
         return
       .catch (error) =>
@@ -63,7 +66,6 @@ class DockerHubService
       vcs_repo_name: "#{@owner}/#{@repo}",
     }
     debug 'create respository build details', details
-    console.log colors.magenta('NOTICE'), colors.white('creating the repository hub.docker.com')
     dockerHubApi.createRepository @owner, @repo, details
       .then (build) =>
         debug 'created repository', build
@@ -79,7 +81,6 @@ class DockerHubService
       return callback null unless tag?
       dockerHubApi.deleteBuildTag @owner, @repo, tag.id
         .then =>
-          console.log colors.magenta('NOTICE'), colors.white('removed the automated build in docker hub')
           callback null
         .catch (error) =>
           callback error
@@ -114,7 +115,6 @@ class DockerHubService
   _removeV1Webhook: (callback) =>
     dockerHubApi.makeDeleteRequest("/repositories/#{@owner}/#{@repo}/webhook_pipeline/beekeeper/")
       .then =>
-        console.log colors.magenta('NOTICE'), colors.white('removed the old webhook v1 in docker hub')
         debug 'v1 beekeeper hook removed'
         callback null
       .catch (error) =>
@@ -137,7 +137,6 @@ class DockerHubService
 
   _createWebhookHook: (webhookId, callback) =>
     debug 'creating webhook v2 hook'
-    console.log colors.magenta('NOTICE'), colors.white('creating the webhook v2 in docker hub')
     dockerHubApi.createWebhookHook @owner, @repo, webhookId, @webhookUrl
       .then (hook) =>
         debug 'created webhook hook', hook

@@ -84,7 +84,6 @@ class ProjectService
       ]
     }
     return callback null if _.isEqual packageJSON, orgPackage
-    console.log colors.magenta('NOTICE'), colors.white('modifying package.json - make sure you run npm install')
     fs.writeJson @packagePath, packageJSON, { spaces: 2 }, callback
 
   _defaultTravisFile: () =>
@@ -108,7 +107,6 @@ class ProjectService
     return callback null unless @travisEnabled
     fs.access @travisYml, fs.constants.F_OK | fs.constants.W_OK, (error) =>
       return callback null unless error?
-      console.log colors.magenta('NOTICE'), colors.white('creating .travis.yml')
       yaml.write @travisYml, @_defaultTravisFile(), callback
 
   _modifyTravis: ({ isPrivate }, callback) =>
@@ -143,16 +141,10 @@ class ProjectService
         data.after_success = _.concat data.after_success, after_success
         delete data.after_success if _.isEmpty data.after_success
         return callback null if _.isEqual orgData, data
-        console.log colors.magenta('NOTICE'), colors.white('modifying .travis.yml')
         yaml.write @travisYml, data, callback
 
   _modifyDockerfile: (callback) =>
     return callback null unless @project.language == 'node'
-    console.log colors.magenta('NOTICE'), colors.white('use an octoblu base image in your Dockerfile')
-    console.log '  ', colors.cyan('Web Service:'), colors.white('`FROM octoblu/node:8-webservice-onbuild`')
-    console.log '  ', colors.cyan('Worker:     '), colors.white('`FROM octoblu/node:8-worker-onbuild`')
-    console.log '  ', colors.cyan('Static Site:'), colors.white('`FROM octoblu/node:8-staticsite-onbuild`')
-    console.log '  ', colors.cyan('Other:      '), colors.white('`FROM octoblu/node:8-alpine-gyp`')
     callback null
 
   _modifyDockerignore: (callback) =>
@@ -160,7 +152,6 @@ class ProjectService
       return callback error if error?
       newContents = contents.replace('test\n', '')
       return callback null if contents == newContents
-      console.log colors.magenta('NOTICE'), colors.white('modifying .dockerignore')
       fs.writeFile @dockerignorePath, "#{newContents}\n", callback
 
   _getFile: (filePath, callback) =>

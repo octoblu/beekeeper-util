@@ -85,6 +85,12 @@
     "type": "string"
   },
   {
+    "key": "npm.token",
+    "env": "BEEKEEPER_NPM_TOKEN",
+    "type": "string",
+    "default": true
+  },
+  {
     "key": "quay.enabled",
     "env": "BEEKEEPER_QUAY_ENABLED",
     "type": "boolean",

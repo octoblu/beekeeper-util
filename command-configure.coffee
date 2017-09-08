@@ -2,13 +2,14 @@ async             = require 'async'
 colors            = require 'colors'
 program           = require 'commander'
 
-QuayService       = require './src/quay-service.coffee'
-DockerHubService  = require './src/docker-hub-service.coffee'
-ProjectService    = require './src/project-service.coffee'
-CodefreshService  = require './src/codefresh-service.coffee'
-TravisService     = require './src/travis-service.coffee'
-CodecovService    = require './src/codecov-service.coffee'
-GithubService     = require './src/github-service.coffee'
+Spinner          = require './src/spinner'
+QuayService      = require './src/quay-service'
+DockerHubService = require './src/docker-hub-service'
+ProjectService   = require './src/project-service'
+CodefreshService = require './src/codefresh-service'
+TravisService    = require './src/travis-service'
+CodecovService   = require './src/codecov-service'
+GithubService    = require './src/github-service'
 
 packageJSON       = require './package.json'
 
@@ -19,15 +20,17 @@ program
 
 class Command
   constructor: (@config) ->
+    @spinner = new Spinner()
+    @spinner.start 'Starting Beekeeper'
     process.on 'uncaughtException', @die
     { @repo, @owner } = @parseOptions()
-    @projectService = new ProjectService { @config }
-    @quayService = new QuayService { @config }
-    @dockerHubService = new DockerHubService { @config }
-    @codefreshService = new CodefreshService { @config }
-    @travisService = new TravisService { @config }
-    @codecovService = new CodecovService { @config, @travisService }
-    @githubService = new GithubService { @config }
+    @projectService = new ProjectService { @config, @spinner }
+    @quayService = new QuayService { @config, @spinner }
+    @dockerHubService = new DockerHubService { @config, @spinner }
+    @codefreshService = new CodefreshService { @config, @spinner }
+    @travisService = new TravisService { @config, @spinner }
+    @codecovService = new CodecovService { @config, @travisService, @spinner }
+    @githubService = new GithubService { @config, @spinner }
 
   parseOptions: =>
     program.parse process.argv
@@ -44,6 +47,8 @@ class Command
     @githubService.getRepo { @repo, @owner }, (error, githubRepo) =>
       return @die error if error?
       @isPrivate = githubRepo.private
+      @spinner.log("Configuring #{@owner}/#{@repo}", '🐝')
+      @spinner.start("Configuring")
       async.series [
         async.apply @travisService.configure, { @repo, @owner, @isPrivate }
         async.apply @codecovService.configure, { @repo, @owner, @isPrivate }
@@ -55,7 +60,7 @@ class Command
         async.apply @codefreshService.configure, { @repo, @owner, @isPrivate }
       ], (error) =>
         return @die error if error?
-        console.log colors.green('SUCCESS'), colors.white('it has been done. Gump it when ready.')
+        @spinner.succeed 'Configured!'
         process.exit 0
 
   dieHelp: (error) =>
@@ -65,6 +70,8 @@ class Command
 
   die: (error) =>
     return process.exit(0) unless error?
+    @spinner.warn()
+    @spinner.fail error.toString()
     console.error error.stack
     process.exit 1
 

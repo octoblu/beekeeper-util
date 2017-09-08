@@ -3,7 +3,7 @@ request           = require 'request'
 debug             = require('debug')('beekeeper-util:codecov-service')
 
 class CodecovService
-  constructor: ({ config, @travisService }) ->
+  constructor: ({ config, @travisService, @spinner }) ->
     throw new Error 'Missing config argument' unless config?
     throw new Error 'Missing travisService argument' unless @travisService?
     { @codecov } = config
@@ -12,18 +12,24 @@ class CodecovService
 
   configure: ({ @repo, @owner, @isPrivate }, callback) =>
     return callback null unless @codecov.enabled
-    debug 'setting up travis', { @repo, @owner, @isPrivate }
+    debug 'setting up codecov', { @repo, @owner, @isPrivate }
+    @spinner?.start 'Codecov: Enabling repo'
     @_ensureRepo (error) =>
       return callback error if error?
+      @spinner?.log 'Codecov: Repo enabled'
       callback null
 
   configureEnv: ({ @repo, @owner, @isPrivate }, callback) =>
     return callback null unless @codecov.enabled
     return callback() unless @isPrivate
+    @spinner?.start 'Codecov: Configuring environment'
     @_getRepo { @repo, @owner, @isPrivate }, (error, result) =>
       return callback error if error?
       uploadToken = _.get result, 'repo.upload_token'
-      @travisService.updateEnv { @repo, @owner, @isPrivate, envName: 'CODECOV_TOKEN', envValue: uploadToken }, callback
+      @travisService.updateEnv { @repo, @owner, @isPrivate, envName: 'CODECOV_TOKEN', envValue: uploadToken }, (error) =>
+        return callback error if error?
+        @spinner?.log 'Codecov: Environment configured'
+        callback()
 
   _ensureRepo: (callback) =>
     @_getRepo { @repo, @owner, @isPrivate }, (error, result) =>

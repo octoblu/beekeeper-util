@@ -1,11 +1,13 @@
 _       = require 'lodash'
 request = require 'request'
 debug   = require('debug')('beekeeper-util:codefresh-service')
+path    = require 'path'
+fs      = require 'fs-extra'
 
 class CodefreshService
-  constructor: ({ config }) ->
+  constructor: ({ config, @spinner }) ->
     throw new Error 'Missing config argument' unless config?
-    { @codefresh, @beekeeper } = config
+    { @codefresh, @beekeeper, @npm, @project } = config
     if @codefresh.enabled
       throw new Error 'Missing codefresh.token in config' unless @codefresh.token?
     throw new Error 'Missing beekeeper.uri in config' unless @beekeeper.uri?
@@ -13,17 +15,19 @@ class CodefreshService
   configure: ({ @repo, @owner, @isPrivate }, callback) =>
     return callback null unless @codefresh.enabled
     debug 'setting up codefresh', { @repo, @owner, @isPrivate }
+    @spinner?.start 'Codefresh: Enabling repo'
     @_ensureService (error) =>
       return callback error if error?
+      @spinner?.log 'Codefresh: Repo enabled'
       callback null
 
   _ensureService: (callback) =>
-    @_serviceExists (error, exists) =>
+    @_getServices (error, services) =>
       return callback error if error?
-      return callback null if exists
-      @_getDefaults (error, defaults) =>
+      @_getRegistryId (error, registryId) =>
         return callback error if error?
-        @_createService { defaults }, callback
+        return @_updateServices { services, registryId }, callback unless _.isEmpty services
+        @_createService { registryId }, callback
 
   _getDefaults: (callback) =>
     debug 'get service defaults'
@@ -32,27 +36,38 @@ class CodefreshService
       debug 'defaults', defaults
       callback null, defaults
 
-  _createService: ({ defaults }, callback) =>
-    @_getRegistryId (error, registryId) =>
+  _createService: ({ registryId }, callback) =>
+    @_getDefaults (error, service) =>
       return callback error if error?
       debug 'service does not exist, but I will make it exist'
-      createBody = @_convertDefaults { defaults, registryId }
-      debug 'createBody', createBody
+      service = @_setServiceDefaults { registryId, service }
+      services = [ service ]
+      debug '_createService', JSON.stringify({ services }, null, 2)
       options = {
         pathname: "/services/#{@owner}/#{@repo}/create"
         method: 'POST'
-        json: createBody
+        json: { services }
       }
-      @_request options, (error) =>
-        return callback error if error?
-        callback null
+      @_request options, callback
 
-  _serviceExists: (callback) =>
+  _updateServices: ({ registryId, services }, callback) =>
+    debug 'updating service'
+    services = _.map services, (service) => @_setServiceDefaults { service, registryId }
+    debug '_updateServices', JSON.stringify({ services }, null, 2)
+
+    options = {
+      pathname: "/services/#{@owner}/#{@repo}"
+      method: 'POST'
+      json: { services }
+    }
+    @_request options, callback
+
+  _getServices: (callback) =>
     debug 'checking if service exists'
     @_request { pathname: "/services/#{@owner}/#{@repo}" }, (error, services) =>
       return callback error if error?
       debug 'services', services
-      callback null, !_.isEmpty services
+      callback null, services
 
   _getRegistryId: (callback) =>
     @_request { pathname: "/registries" }, (error, registries) =>
@@ -81,12 +96,24 @@ class CodefreshService
         return callback new Error "Unexpected Response #{response.statusCode}"
       callback null, body
 
-  _convertDefaults: ({ defaults, registryId }) =>
-    service = _.cloneDeep defaults
-    _.set service, 'deploy_sh',  '''
-      yarn global add beekeeper-util
-      beekeeper webhook --type codefresh --ci-passing false
-    '''
+  _getWebhookBuildStrategy: =>
+    codefreshFile = path.join @project.root, 'codefresh.yml'
+    try
+      fs.accessSync codefreshFile, fs.constants.F_OK
+    catch
+      return 'regular'
+
+    return 'yaml'
+
+  _setServiceDefaults: ({ registryId, service }) =>
+    webhookBuildStrategy = @_getWebhookBuildStrategy()
+    service = _.cloneDeep service
+    _.set service, 'deploy_sh',  'beekeeper webhook --type codefresh'
+    _.set service, 'deployment', {
+      deploy_image: 'octoblu/beekeeper-util:latest'
+      deploy_type: 'image-based'
+      deploymentYamlFrom: 'kubeService'
+    }
     _.set service, 'integ_sh', ''
     _.set service, 'test_sh',  ''
     _.set service, 'env', [
@@ -95,8 +122,14 @@ class CodefreshService
         value: @beekeeper.uri
         encrypted: true
       }
+      {
+        key: 'NPM_TOKEN'
+        value: @npm.token
+        encrypted: true
+      }
     ]
     _.set service, 'useDockerfileFromRepo', true
+    _.set service, 'webhookBuildStrategy', webhookBuildStrategy
     _.set service, 'registry', registryId
     _.set service, 'imageName', "#{@owner}/#{@repo}"
     _.set service, 'webhookFilter', [
@@ -105,8 +138,6 @@ class CodefreshService
         type: 'regex'
       }
     ]
-    return {
-      services: [service]
-    }
+    return service
 
 module.exports = CodefreshService
