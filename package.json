@@ -15,6 +15,7 @@
     "beekeeper-configure": "./command-configure.js",
     "beekeeper-delete": "./command-delete.js",
     "beekeeper-get": "./command-get.js",
+    "beekeeper-release": "./command-release.js",
     "beekeeper-status-notify": "./command-status-notify.js",
     "beekeeper-status": "./command-status.js",
     "beekeeper-tag": "./command-tag.js",

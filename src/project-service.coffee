@@ -20,7 +20,7 @@ class ProjectService
     if @beekeeper.enabled
       throw new Error 'Missing beekeeper.uri in config' unless @beekeeper.uri?
     throw new Error 'Missing project.root in config' unless @project.root?
-    throw new Error 'Missing project.type in config' unless @project.type?
+    throw new Error 'Missing project.language in config' unless @project.language?
     throw new Error 'Missing project.versionFileName in config' unless @project.versionFileName?
     @travisYml = path.join @project.root, '.travis.yml'
     @packagePath = path.join @project.root, 'package.json'
@@ -57,7 +57,7 @@ class ProjectService
       fs.writeFile @versionFile, newContents, callback
 
   _modifyPackage: (callback) =>
-    return callback() unless @project.type == 'node'
+    return callback() unless @project.language == 'node'
     return callback null unless @codecovEnabled
     packageJSON = fs.readJsonSync @packagePath
     orgPackage = _.cloneDeep packageJSON
@@ -87,14 +87,14 @@ class ProjectService
     fs.writeJson @packagePath, packageJSON, { spaces: 2 }, callback
 
   _defaultTravisFile: () =>
-    if @project.type == 'node'
+    if @project.language == 'node'
       return {
         language: 'node_js'
         node_js: ['8']
         branches:
           only: ["/^v[0-9]/"]
       }
-    if @project.type == 'golang'
+    if @project.language == 'golang'
       return {
         language: 'go'
         go: ['1.9']
@@ -146,7 +146,7 @@ class ProjectService
         yaml.write @travisYml, data, callback
 
   _modifyDockerfile: (callback) =>
-    return callback null unless @project.type == 'node'
+    return callback null unless @project.language == 'node'
     console.log colors.magenta('NOTICE'), colors.white('use an octoblu base image in your Dockerfile')
     console.log '  ', colors.cyan('Web Service:'), colors.white('`FROM octoblu/node:8-webservice-onbuild`')
     console.log '  ', colors.cyan('Worker:     '), colors.white('`FROM octoblu/node:8-worker-onbuild`')

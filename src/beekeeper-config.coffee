@@ -97,6 +97,7 @@ class BeekeeperConfig
       callback null, !error?
 
   _readJSONFile: (filePath, callback) =>
+    return callback null unless filePath?
     @_checkAccess filePath, (error, hasAccess) =>
       return callback error if error?
       return callback null unless hasAccess
