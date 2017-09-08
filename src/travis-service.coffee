@@ -15,7 +15,14 @@ class TravisService
     debug 'setting up travis', { repo, owner, isPrivate }
     githubToken = @github.token
     travisRequest = new TravisRequest({ repo, owner, isPrivate, @spinner, githubToken })
-    travisRequest.ensureRepo callback
+    travisRequest.ensureRepo (error) =>
+      return callback error if error?
+      return callback() if _.isEmpty @travis.env
+      async.eachSeries @travis.env, ({ env, name, value }, next) =>
+        envName = name
+        envValue = value ? process.env[env]
+        travisRequest.upsertEnv { envName, envValue }, next
+      , callback
 
   updateEnv: ({ repo, owner, isPrivate, envName, envValue }, callback) =>
     return callback null unless @travis.enabled
@@ -56,19 +63,36 @@ class TravisRequest
         callback null, body
 
   upsertEnv: ({ envName, envValue }, callback) =>
-    @spinner?.start 'Travis: Updating Environment'
+    @spinner?.start "Travis: Updating Environment [#{envName}]"
+    @_getRepo (error, result) =>
+      return callback error if error?
+      repoId = result.id
+      @_getEnvVars { repoId }, (error, envVars) =>
+        return callback error if error?
+        envVar = _.find envVars, name: envName
+        envId = envVar?.id
+        @_updateEnv { repoId, envId, envName, envValue }, (error) =>
+          return callback error if error?
+          @spinner?.log "Travis: Environment updated [#{envName}]"
+          callback()
+
+  _updateEnv: ({ envId, repoId, envName, envValue }, callback) =>
+    method = "POST"
+
+    method = "PATCH" if envId?
+
     json =
       env_var:
         name: envName
         value: envValue
         public: false
 
-    @_getRepo (error, result) =>
+    @_request { pathname: "/settings/env_vars/#{envId}?repository_id=#{repoId}", json, method }, callback
+
+  _getEnvVars: ({ repoId }, callback) =>
+    @_request { pathname: "/settings/env_vars?repository_id=#{repoId}" }, (error, result) =>
       return callback error if error?
-      @_request { pathname: "/settings/env_vars?repository_id=#{result.id}", json, method: 'POST' }, (error) =>
-        return callback error if error?
-        @spinner?.log 'Travis: Environment updated'
-        callback()
+      return callback null, result.env_vars
 
   _enableRepo: (callback) =>
     @spinner?.start 'Travis: Enable repo'
@@ -86,9 +110,12 @@ class TravisRequest
 
   _getToken: (callback) =>
     return callback null, @travisToken if @travisToken?
-    return callback() unless @isPrivate
+    baseUrl = 'https://api.travis-ci.org'
+    baseUrl = 'https://api.travis-ci.com' if @isPrivate
     options = {
-      baseUrl: 'https://api.travis-ci.com'
+      baseUrl
+      headers:
+        'User-Agent': 'Travis CI/1.0'
       uri: '/auth/github'
       method: 'POST'
       json:
@@ -97,6 +124,7 @@ class TravisRequest
     debug 'options', options
     request options, (error, response, body) =>
       return callback error if error?
+      debug 'responsable', response.body
       debug 'got response', response.statusCode
       if response.statusCode > 499
         debug response.statusCode, body

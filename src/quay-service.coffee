@@ -1,6 +1,5 @@
 request = require 'request'
 async   = require 'async'
-colors  = require 'colors'
 debug   = require('debug')('beekeeper-util:quay-service')
 
 QUAY_BASE_URL='https://quay.io/api/v1'
@@ -13,7 +12,7 @@ class QuayService
       throw new Error 'Missing quay.token in config' unless @quay.token?
 
   configure: ({ @repo, @owner, @isPrivate }, callback) =>
-    return callback null unless @quayEnabled
+    return callback null unless @quay.enabled
     debug 'setting up quay'
     @spinner?.start 'Quay: Enabling repo'
     @_repositoryExists (error, exists) =>

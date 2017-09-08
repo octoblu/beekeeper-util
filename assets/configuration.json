@@ -113,6 +113,11 @@
     "type": "string"
   },
   {
+    "key": "travis.env",
+    "env": "BEEKEEPER_TRAVIS_ENV",
+    "type": "object"
+  },
+  {
     "key": "dockerHub.enabled",
     "env": "BEEKEEPER_DOCKERHUB_ENABLED",
     "type": "boolean",

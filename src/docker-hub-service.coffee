@@ -1,7 +1,6 @@
 _            = require 'lodash'
 url          = require 'url'
 dockerHubApi = require '@octoblu/docker-hub-api'
-colors       = require 'colors'
 debug        = require('debug')('beekeeper-util:docker-hub-service')
 
 class DockerHubService
@@ -10,6 +9,7 @@ class DockerHubService
     {
       @beekeeper,
       @dockerHub
+      @docker
     } = config
     if @dockerHub.enabled
       throw new Error 'Missing dockerHub.username in config' unless @dockerHub.username?
@@ -23,6 +23,7 @@ class DockerHubService
     debug 'webhookUrl', @webhookUrl
 
   configure: ({ @repo, @owner, @isPrivate, @noWebhook }, callback) =>
+    return callback null unless @docker.hasDockerFile
     return callback null unless @dockerHub.enabled
     debug 'setting up docker', { @repo, @owner, @isPrivate, @noWebhook }
     @spinner?.start 'DockerHub: Enabling repo'

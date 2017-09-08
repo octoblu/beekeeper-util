@@ -36,15 +36,21 @@ class BeekeeperConfig
         return callback error if error?
         @_getProjectVersion projectRoot, versionFileName, (error, version) =>
           return callback error if error?
-          callback null, {
-            project: {
-              name,
-              language,
-              versionFileName,
-              version,
-              root: projectRoot,
+          @_hasDockerFile projectRoot, (error, hasDockerFile) =>
+            return callback error if error?
+            callback null, {
+              docker: { hasDockerFile }
+              project: {
+                name
+                language
+                versionFileName
+                version
+                root: projectRoot
+              }
             }
-          }
+
+  _hasDockerFile: (projectRoot, callback) =>
+    @_checkAccess path.join(projectRoot, 'Dockerfile'), callback
 
   _getProjectName: (projectRoot, language, callback) =>
     return callback null, path.basename(projectRoot) unless language == 'node'

@@ -2,7 +2,6 @@ _      = require 'lodash'
 path   = require 'path'
 url    = require 'url'
 yaml   = require 'node-yaml'
-colors = require 'colors'
 fs     = require 'fs-extra'
 semver = require 'semver'
 semverRegex = require 'semver-regex'
@@ -16,6 +15,7 @@ class ProjectService
       @project,
       @codecov,
       @travis,
+      @docker
     } = config
     if @beekeeper.enabled
       throw new Error 'Missing beekeeper.uri in config' unless @beekeeper.uri?
@@ -33,9 +33,7 @@ class ProjectService
       return callback error if error?
       @_modifyDockerignore (error) =>
         return callback error if error?
-        @_modifyDockerfile (error) =>
-          return callback error if error?
-          @_modifyPackage callback
+        @_modifyPackage callback
 
   initVersionFile: (callback) =>
     return callback null unless @project.versionFileName == 'VERSION'
@@ -143,11 +141,8 @@ class ProjectService
         return callback null if _.isEqual orgData, data
         yaml.write @travisYml, data, callback
 
-  _modifyDockerfile: (callback) =>
-    return callback null unless @project.language == 'node'
-    callback null
-
   _modifyDockerignore: (callback) =>
+    return callback null unless @docker.hasDockerFile
     @_getFile @dockerignorePath, (error, contents) =>
       return callback error if error?
       newContents = contents.replace('test\n', '')

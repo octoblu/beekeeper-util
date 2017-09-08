@@ -7,13 +7,14 @@ fs      = require 'fs-extra'
 class CodefreshService
   constructor: ({ config, @spinner }) ->
     throw new Error 'Missing config argument' unless config?
-    { @codefresh, @beekeeper, @npm, @project } = config
+    { @codefresh, @beekeeper, @npm, @project, @docker } = config
     if @codefresh.enabled
       throw new Error 'Missing codefresh.token in config' unless @codefresh.token?
     throw new Error 'Missing beekeeper.uri in config' unless @beekeeper.uri?
 
   configure: ({ @repo, @owner, @isPrivate }, callback) =>
     return callback null unless @codefresh.enabled
+    return callback null unless @docker.hasDockerFile
     debug 'setting up codefresh', { @repo, @owner, @isPrivate }
     @spinner?.start 'Codefresh: Enabling repo'
     @_ensureService (error) =>
