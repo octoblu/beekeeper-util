@@ -11,8 +11,6 @@ ProjectService   = require './src/project-service.coffee'
 
 packageJSON   = require './package.json'
 
-list = (val) -> _.map _.split(val, ','), _.trim
-
 program
   .version packageJSON.version
   .usage '[options] <message>'
@@ -27,7 +25,6 @@ program
   .option '--patch', 'Bump with semver patch version. Default version release.'
   .option '--prepatch', 'Bump with semver prepatch version'
   .option '--prerelease [preid]', 'Bump with semver prerelease version, value is <tag>-<preid>'
-  .option '-a, --authors <authors>', 'a list of authors', list
 
 class Command
   constructor: (@config) ->
@@ -41,7 +38,6 @@ class Command
     program.parse process.argv
     repo = program.repo || @config.project.name
     owner = program.owner || @config.project.owner
-    authors = _.map program.authors, (initial) => @config.authors[initial]
     tag = @getNewTag program
     release = @getRelease program
     message = _.trim "v#{tag} #{program.args[0] || ''}"
@@ -49,7 +45,6 @@ class Command
       repo,
       owner,
       tag,
-      authors,
       message,
       release
     }
@@ -74,12 +69,12 @@ class Command
     return 'patch'
 
   run: =>
-    { authors, message, tag, owner, repo, release } = @parseOptions()
+    { message, tag, owner, repo, release } = @parseOptions()
     async.series [
       async.apply @gitService.check, { tag }
       async.apply @projectService.initVersionFile
       async.apply @projectService.modifyVersion, { tag }
-      async.apply @gitService.release, { authors, message, tag }
+      async.apply @gitService.release, { message, tag }
       async.apply @beekeeperService.create, { owner, repo, tag }
       async.apply @githubService.createRelease, { owner, repo, tag, message, release }
     ], (error) =>

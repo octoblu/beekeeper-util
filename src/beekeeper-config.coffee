@@ -130,7 +130,13 @@ class BeekeeperConfig
     value = _.get projectConfig, configItem.key
     globalValue = _.get globalConfig, configItem.key
     debug 'get config value', { configItem, envValue, value, globalValue }
-    return value ? envValue ? globalValue ? configItem.default
+    return @_ensureType(configItem.type, value ? envValue ? globalValue ? configItem.default)
+
+  _ensureType: (type, value) =>
+    if type == 'boolean'
+      return value if _.isBoolean(value)
+      return value.toLowerCase() == 'true'
+    return value
 
   _getEnvValue: (configItem) =>
     return _.find _.castArray(configItem.env), (envStr) =>

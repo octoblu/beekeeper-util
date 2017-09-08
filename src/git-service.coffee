@@ -1,6 +1,5 @@
 { check, isGit } = require 'git-state'
 simpleGit        = require 'simple-git'
-_                = require 'lodash'
 semver           = require 'semver'
 path             = require 'path'
 debug            = require('debug')('beekeeper-util:git-service')
@@ -20,9 +19,8 @@ class GitService
         return callback new Error 'Branch must be master' unless branch == 'master'
         @_validateTag { tag }, callback
 
-  release: ({ authors, message, tag }, callback) =>
+  release: ({ message, tag }, callback) =>
     git = @_git()
-    @_setAuthors git, authors
     git.add path.join(@project.root, '*')
     git.commit message, (error) =>
       return callback error if error?
@@ -37,14 +35,6 @@ class GitService
     git.fetch (error) =>
       return callback error if error?
       git.log callback
-
-  _setAuthors: (git, authors) =>
-    return if _.isEmpty authors
-    names = _.join _.map(authors, 'name'), ', '
-    emails = _.join _.map(authors, 'email'), ', '
-    debug('authors', { names, emails })
-    git.addConfig 'user.name', names
-    git.addConfig 'user.email', emails
 
   _tagAndPush: (git, tag, callback) =>
     git.tag ["v#{tag}"], (error) =>

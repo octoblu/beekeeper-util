@@ -1,11 +1,5 @@
 [
   {
-    "key": "authors",
-    "env": ["BEEKEEPER_AUTHORS"],
-    "type": "object",
-    "default": {}
-  },
-  {
     "key": "beekeeper.enabled",
     "env": ["BEEKEEPER_ENABLED"],
     "type": "boolean",
