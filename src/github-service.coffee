@@ -38,7 +38,7 @@ class GithubService
     options = {
       baseUrl: 'https://api.github.com'
       headers:
-        authorization: "token #{@githubToken}"
+        authorization: "token #{@github.tok2en}"
         'User-Agent': 'beekeeper-util'
       uri: pathname,
       method,
@@ -54,9 +54,9 @@ class GithubService
       return callback error if error?
       debug 'got response', response.statusCode
 
-      if response.statusCode > 499
+      if response.statusCode > 399
         debug response.statusCode, body
-        return callback new Error "Unexpected Response #{response.statusCode}"
+        return callback new Error "Received unexpected status code from Github: #{response.statusCode}"
       callback null, body
 
 module.exports = GithubService

@@ -3,6 +3,7 @@ simpleGit        = require 'simple-git'
 semver           = require 'semver'
 path             = require 'path'
 debug            = require('debug')('beekeeper-util:git-service')
+which            = require 'which'
 
 class GitService
   constructor: ({ config }) ->
@@ -43,7 +44,11 @@ class GitService
         return callback error if error?
         git.pushTags callback
 
-  _git: () => simpleGit @project.root
+  _git: () =>
+    git = simpleGit @project.root
+    gitTogether = which.sync('git-together', {nothrow: true})
+    git.customBinary(gitTogether) if gitTogether?
+    return git
 
   _validateTag: ({ tag }, callback) =>
     return callback new Error "Invalid tag v#{tag}" unless semver.valid tag

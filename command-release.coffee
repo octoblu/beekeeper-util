@@ -1,8 +1,9 @@
 _       = require 'lodash'
-colors  = require 'colors'
 program = require 'commander'
 semver  = require 'semver'
 async   = require 'async'
+ora     = require 'ora'
+chalk   = require 'chalk'
 
 GithubService    = require './src/github-service.coffee'
 GitService       = require './src/git-service.coffee'
@@ -70,17 +71,39 @@ class Command
 
   run: =>
     { message, tag, owner, repo, release } = @parseOptions()
+    spinner = ora()
+    spinner.start("Releasing v#{tag}")
     async.series [
       async.apply @gitService.check, { tag }
       async.apply @projectService.initVersionFile
+      async.apply @startSpinner, { spinner, text: "Modifying version to v#{tag}" }
       async.apply @projectService.modifyVersion, { tag }
+      async.apply @stopAndPersistSpinner, { spinner }
+      async.apply @startSpinner, { spinner, text: "Creating git release for v#{tag}" }
       async.apply @gitService.release, { message, tag }
+      async.apply @stopAndPersistSpinner, { spinner }
+      async.apply @startSpinner, { spinner, text: "Creating beekeeper release for v#{tag}", enabled: @config.beekeeper.enabled }
       async.apply @beekeeperService.create, { owner, repo, tag }
+      async.apply @stopAndPersistSpinner, { spinner }
+      async.apply @startSpinner, { spinner, text: "Creating github release for v#{tag}", enabled: @config.github.release.enabled }
       async.apply @githubService.createRelease, { owner, repo, tag, message, release }
+      async.apply @stopAndPersistSpinner, { spinner }
     ], (error) =>
-      return @die error if error?
-      console.log colors.green("RELEASED"), colors.bold("v#{tag}")
+      if error?
+        spinner.fail(error.toString())
+      else
+        spinner.succeed("Released v#{tag}")
       @die()
+
+  startSpinner: ({ spinner, text, color, enabled }, callback) =>
+    return callback(null) unless enabled
+    spinner.color = color if color?
+    spinner.start(text)
+    callback null
+
+  stopAndPersistSpinner: ({ spinner }, callback) =>
+    spinner.stopAndPersist({ symbol: chalk.cyan('✔') })
+    callback()
 
   dieHelp: (error) =>
     console.error error.toString()
