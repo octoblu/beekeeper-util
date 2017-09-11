@@ -70,6 +70,9 @@ class CodecovService
       return callback error if error?
       debug 'got response', response.statusCode
 
+      if response.statusCode == 403
+        return callback new Error "Access Denied"
+
       if response.statusCode > 499
         debug response.statusCode, body
         return callback new Error "Unexpected Response #{response.statusCode}"

@@ -53,14 +53,17 @@ class TravisRequest
         return callback error if error?
         debug 'got response', response.statusCode
 
+        if response.statusCode == 403
+          return callback new Error "Access Denied"
+
         if response.statusCode == 409
-          _.delay callback, 10000, body
+          _.delay callback, 10000, body, response.statusCode
           return
 
         if response.statusCode > 499
           debug response.statusCode, body
           return callback new Error "Unexpected Response #{response.statusCode}"
-        callback null, body
+        callback null, body, response.statusCode
 
   upsertEnv: ({ envName, envValue }, callback) =>
     @spinner?.start "Travis: Updating Environment [#{envName}]"
@@ -77,9 +80,12 @@ class TravisRequest
           callback()
 
   _updateEnv: ({ envId, repoId, envName, envValue }, callback) =>
+    envPath = ''
+    envPath = "/#{envId}" unless _.isEmpty envId
     method = "POST"
 
     method = "PATCH" if envId?
+
 
     json =
       env_var:
@@ -87,7 +93,13 @@ class TravisRequest
         value: envValue
         public: false
 
-    @_request { pathname: "/settings/env_vars/#{envId}?repository_id=#{repoId}", json, method }, callback
+    @_request { pathname: "/settings/env_vars#{envPath}?repository_id=#{repoId}", json, method }, (error, body, statusCode) =>
+      return callback error if error?
+      if statusCode > 299
+        error = new Error "Unexpected Response #{statusCode}"
+        error.code = statusCode
+        return callback error
+      callback()
 
   _getEnvVars: ({ repoId }, callback) =>
     @_request { pathname: "/settings/env_vars?repository_id=#{repoId}" }, (error, result) =>
