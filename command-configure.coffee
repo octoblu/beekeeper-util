@@ -7,7 +7,7 @@ QuayService      = require './src/quay-service'
 DockerHubService = require './src/docker-hub-service'
 ProjectService   = require './src/project-service'
 CodefreshService = require './src/codefresh-service'
-TravisService    = require './src/travis-service'
+TravisService    = require './lib/services/travis-service'
 CodecovService   = require './src/codecov-service'
 GithubService    = require './src/github-service'
 
@@ -24,11 +24,14 @@ class Command
     @spinner.start 'Starting Beekeeper'
     process.on 'uncaughtException', @die
     { @repo, @owner } = @parseOptions()
+    throw new Error("Missing option: repo") unless @repo?
+    throw new Error("Missing option: owner") unless @owner?
+    { github, travis } = @config
     @projectService = new ProjectService { @config, @spinner }
     @quayService = new QuayService { @config, @spinner }
     @dockerHubService = new DockerHubService { @config, @spinner }
     @codefreshService = new CodefreshService { @config, @spinner }
-    @travisService = new TravisService { @config, @spinner }
+    @travisService = new TravisService { github, travis, @spinner }
     @codecovService = new CodecovService { @config, @travisService, @spinner }
     @githubService = new GithubService { @config, @spinner }
 
@@ -49,19 +52,26 @@ class Command
       @isPrivate = githubRepo.private
       @spinner.log("Configuring #{@owner}/#{@repo}", '🐝')
       @spinner.start("Configuring")
-      async.series [
-        async.apply @travisService.configure, { @repo, @owner, @isPrivate }
-        async.apply @codecovService.configure, { @repo, @owner, @isPrivate }
-        async.apply @codecovService.configureEnv, { @repo, @owner, @isPrivate }
-        async.apply @projectService.configure, { @isPrivate }
-        async.apply @projectService.initVersionFile
-        async.apply @quayService.configure, { @repo, @owner, @isPrivate }
-        async.apply @dockerHubService.configure, { @repo, @owner, @isPrivate }
-        async.apply @codefreshService.configure, { @repo, @owner, @isPrivate }
-      ], (error) =>
-        return @die error if error?
-        @spinner.succeed 'Configured!'
-        process.exit 0
+      projectName = @repo
+      projectOwner = @owner
+      @travisService.configure { projectName, projectOwner, @isPrivate }
+        .then =>
+          async.series [
+            async.apply @codecovService.configure, { @repo, @owner, @isPrivate }
+            async.apply @codecovService.configureEnv, { @repo, @owner, @isPrivate }
+            async.apply @projectService.configure, { @isPrivate }
+            async.apply @projectService.initVersionFile
+            async.apply @quayService.configure, { @repo, @owner, @isPrivate }
+            async.apply @dockerHubService.configure, { @repo, @owner, @isPrivate }
+            async.apply @codefreshService.configure, { @repo, @owner, @isPrivate }
+          ], (error) =>
+            return @die error if error?
+            @spinner.succeed 'Configured!'
+            process.exit 0
+        .catch (error) =>
+          return @die error if error?
+          @spinner.succeed 'Configured!'
+          process.exit 0
 
   dieHelp: (error) =>
     console.error error.toString()

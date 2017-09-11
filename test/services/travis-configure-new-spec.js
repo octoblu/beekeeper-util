@@ -1,118 +1,61 @@
 const { beforeEach, afterEach, describe, it } = global
-const { expect } = require("chai")
 const TravisService = require("../../lib/services/travis-service")
 const TravisMocks = require("./travis-mocks")
+const each = require("lodash/each")
+
+const privates = [true, false]
 
 describe("Configure a new travis-ci project", function() {
-  beforeEach("create service", function() {
-    this.sut = new TravisService({
-      github: {
-        token: "github-token",
-      },
-      travis: {
-        env: [
-          {
-            value: "some-value",
-            name: "SOME_ENV_NAME",
+  each(privates, function(isPrivate) {
+    describe(`isPrivate: ${isPrivate}`, function() {
+      beforeEach("create service", function() {
+        this.sut = new TravisService({
+          github: {
+            token: "github-token",
           },
-        ],
-      },
-    })
-  })
-
-  describe("when the repo is public", function() {
-    beforeEach("setup travis mocks", function() {
-      this.travisMocks = new TravisMocks({
-        githubToken: "github-token",
-        isPrivate: false,
+          travis: {
+            env: [
+              {
+                value: "some-value",
+                name: "SOME_ENV_NAME",
+              },
+            ],
+          },
+        })
       })
-    })
 
-    afterEach("clean up travis mocks", function() {
-      this.travisMocks.cleanup()
-    })
-
-    beforeEach("setup travis endpoints", function() {
-      const envVars = [{ name: "SOME_ENV_NAME", value: "some-value" }]
-      this.travisMocks
-        .getRepoWithSync()
-        .enableRepo()
-        .getEnvVars([])
-        .createEnvVars(envVars)
-    })
-
-    beforeEach("call configure", function() {
-      const options = {
-        projectName: "example-repo-name",
-        projectOwner: "some-owner",
-        isPrivate: false,
-      }
-      return this.sut.configure(options)
-    })
-
-    it("should call of the travis endpoints", function() {
-      this.travisMocks.done()
-    })
-  })
-
-  describe("when the repo is private", function() {
-    beforeEach("setup travis mocks", function() {
-      this.travisMocks = new TravisMocks({
-        githubToken: "github-token",
-        isPrivate: true,
+      beforeEach("setup travis mocks", function() {
+        this.travisMocks = new TravisMocks({
+          githubToken: "github-token",
+          isPrivate,
+        })
       })
-    })
 
-    afterEach("clean up travis mocks", function() {
-      this.travisMocks.cleanup()
-    })
-
-    beforeEach("setup travis endpoint", function() {
-      const envVars = [{ name: "SOME_ENV_NAME", value: "some-value" }]
-      this.travisMocks
-        .getRepoWithSync()
-        .enableRepo()
-        .getEnvVars([])
-        .createEnvVars(envVars)
-    })
-
-    beforeEach("call configure", function() {
-      const options = {
-        projectName: "example-repo-name",
-        projectOwner: "some-owner",
-        isPrivate: true,
-      }
-      return this.sut.configure(options)
-    })
-
-    it("should call of the travis endpoints", function() {
-      this.travisMocks.done()
-    })
-  })
-
-  describe("when travis responds with a 403", function() {
-    beforeEach("setup travis mocks", function() {
-      this.travisMocks = new TravisMocks({
-        githubToken: "github-token",
-        isPrivate: false,
+      afterEach("clean up travis mocks", function() {
+        this.travisMocks.cleanup()
       })
-    })
 
-    afterEach("clean up travis mocks", function() {
-      this.travisMocks.cleanup()
-    })
+      beforeEach("setup travis endpoints", function() {
+        const envVars = [{ name: "SOME_ENV_NAME", value: "some-value" }]
+        this.travisMocks
+          .getRepoWithSync()
+          .enableRepo()
+          .getEnvVars([])
+          .createEnvVars(envVars)
+      })
 
-    beforeEach("setup travis endpoints", function() {
-      this.travisMocks.authed.get("/repos/some-owner/example-repo-name").reply(403)
-    })
+      beforeEach("call configure", function() {
+        const options = {
+          projectName: "example-repo-name",
+          projectOwner: "some-owner",
+          isPrivate,
+        }
+        return this.sut.configure(options)
+      })
 
-    it("should be rejected", function() {
-      const options = {
-        projectName: "example-repo-name",
-        projectOwner: "some-owner",
-        isPrivate: false,
-      }
-      expect(this.sut.configure(options)).to.be.rejected
+      it("should call of the travis endpoints", function() {
+        this.travisMocks.done()
+      })
     })
   })
 })

@@ -61,7 +61,10 @@ class TravisMocks {
   }
 
   updateEnvVars(envVars) {
-    each(envVars, ({ name, value, id }) => {
+    each(envVars, ({ name, value, id, env }) => {
+      if (!value && env) {
+        value = process.env[env]
+      }
       this.authed
         .patch(`/settings/env_vars/${id}?repository_id=travis-repo-id`, {
           repository_id: "travis-repo-id",
@@ -75,7 +78,10 @@ class TravisMocks {
   }
 
   createEnvVars(envVars) {
-    each(envVars, ({ name, value }) => {
+    each(envVars, ({ name, value, env }) => {
+      if (!value && env) {
+        value = process.env[env]
+      }
       this.authed
         .post("/settings/env_vars?repository_id=travis-repo-id", {
           repository_id: "travis-repo-id",
