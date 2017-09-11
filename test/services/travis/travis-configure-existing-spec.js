@@ -1,11 +1,11 @@
 const { beforeEach, afterEach, describe, it } = global
 const { expect } = require("chai")
-const TravisService = require("../../lib/services/travis-service")
+const TravisService = require("../../../lib/services/travis-service")
 const TravisMocks = require("./travis-mocks")
 const each = require("lodash/each")
 const privates = [true, false]
 
-describe("Configure an existing travis-ci project", function() {
+describe("Travis: Configure an existing project", function() {
   each(privates, function(isPrivate) {
     describe(`isPrivate: ${isPrivate}`, function() {
       beforeEach("create service", function() {

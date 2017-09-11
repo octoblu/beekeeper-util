@@ -1,9 +1,9 @@
 const { beforeEach, afterEach, describe, it } = global
 const { expect } = require("chai")
-const TravisService = require("../../lib/services/travis-service")
+const TravisService = require("../../../lib/services/travis-service")
 const TravisMocks = require("./travis-mocks")
 
-describe("Travis is rate limited", function() {
+describe("Travis: is rate limited", function() {
   describe("when travis responds with a 403", function() {
     beforeEach("create service", function() {
       this.sut = new TravisService({

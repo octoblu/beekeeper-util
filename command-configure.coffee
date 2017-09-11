@@ -3,13 +3,6 @@ colors            = require 'colors'
 program           = require 'commander'
 
 Spinner          = require './src/spinner'
-QuayService      = require './src/quay-service'
-DockerHubService = require './src/docker-hub-service'
-ProjectService   = require './src/project-service'
-CodefreshService = require './src/codefresh-service'
-TravisService    = require './lib/services/travis-service'
-CodecovService   = require './src/codecov-service'
-GithubService    = require './src/github-service'
 
 packageJSON       = require './package.json'
 
@@ -26,14 +19,7 @@ class Command
     { @repo, @owner } = @parseOptions()
     throw new Error("Missing option: repo") unless @repo?
     throw new Error("Missing option: owner") unless @owner?
-    { github, travis } = @config
-    @projectService = new ProjectService { @config, @spinner }
-    @quayService = new QuayService { @config, @spinner }
-    @dockerHubService = new DockerHubService { @config, @spinner }
-    @codefreshService = new CodefreshService { @config, @spinner }
-    @travisService = new TravisService { github, travis, @spinner }
-    @codecovService = new CodecovService { @config, @travisService, @spinner }
-    @githubService = new GithubService { @config, @spinner }
+    @configureService = new ConfigureService { @config, @spinner }
 
   parseOptions: =>
     program.parse process.argv
@@ -47,31 +33,15 @@ class Command
     }
 
   run: =>
-    @githubService.getRepo { @repo, @owner }, (error, githubRepo) =>
-      return @die error if error?
-      @isPrivate = githubRepo.private
-      @spinner.log("Configuring #{@owner}/#{@repo}", '🐝')
-      @spinner.start("Configuring")
-      projectName = @repo
-      projectOwner = @owner
-      @travisService.configure { projectName, projectOwner, @isPrivate }
-        .then =>
-          async.series [
-            async.apply @codecovService.configure, { @repo, @owner, @isPrivate }
-            async.apply @codecovService.configureEnv, { @repo, @owner, @isPrivate }
-            async.apply @projectService.configure, { @isPrivate }
-            async.apply @projectService.initVersionFile
-            async.apply @quayService.configure, { @repo, @owner, @isPrivate }
-            async.apply @dockerHubService.configure, { @repo, @owner, @isPrivate }
-            async.apply @codefreshService.configure, { @repo, @owner, @isPrivate }
-          ], (error) =>
-            return @die error if error?
-            @spinner.succeed 'Configured!'
-            process.exit 0
-        .catch (error) =>
-          return @die error if error?
-          @spinner.succeed 'Configured!'
-          process.exit 0
+    @configureService.configure @repo, @owner
+      .then =>
+        @spinner.succeed 'Configured!'
+        process.exit 0
+      .catch (error) =>
+        return @die error if error?
+        @spinner.warn()
+        @spinner.fail error.toString()
+        process.exit 1
 
   dieHelp: (error) =>
     console.error error.toString()
