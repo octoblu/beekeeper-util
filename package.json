@@ -77,7 +77,8 @@
     "nock": "^9.0.14",
     "nyc": "^11.0.2",
     "sinon": "^2.3.5",
-    "sinon-chai": "^2.11.0"
+    "sinon-chai": "^2.11.0",
+    "uuid": "^3.1.0"
   },
   "peerDependencies": {},
   "engines": {
