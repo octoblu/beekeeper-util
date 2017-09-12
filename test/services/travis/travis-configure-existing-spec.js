@@ -28,7 +28,7 @@ describe("Travis: Configure an existing project", function() {
       beforeEach("setup travis mocks", function() {
         this.travisMocks = new TravisMocks({
           githubToken: "github-token",
-          isPrivate: false,
+          isPrivate,
         })
       })
 
@@ -38,6 +38,7 @@ describe("Travis: Configure an existing project", function() {
 
       beforeEach("setup travis endpoints", function() {
         this.travisMocks
+          .auth()
           .getRepo()
           .enableRepo()
           .getEnvVars(this.envVars)
@@ -48,7 +49,7 @@ describe("Travis: Configure an existing project", function() {
         const options = {
           projectName: "example-repo-name",
           projectOwner: "some-owner",
-          isPrivate: false,
+          isPrivate,
         }
         return this.sut.configure(options)
       })

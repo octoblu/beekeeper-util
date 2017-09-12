@@ -7,18 +7,23 @@ class TravisMocks {
   constructor({ githubToken, isPrivate }) {
     bindAll(Object.getOwnPropertyNames(TravisMocks.prototype), this)
     const uri = isPrivate ? "https://api.travis-ci.com" : "https://api.travis-ci.org"
-    const accessToken = uuid.v1()
+    this.accessToken = uuid.v1()
+
+    this.githubToken = githubToken
 
     this._tokenExchange = nock(uri)
       .matchHeader("accept", "application/json")
       .matchHeader("user-agent", "Travis CI/1.0")
-      .post("/auth/github", { github_token: githubToken })
-      .reply(200, { access_token: accessToken })
 
     this.authed = nock(uri)
       .matchHeader("accept", "application/json")
       .matchHeader("user-agent", "Travis CI/1.0")
-      .matchHeader("authorization", `token ${accessToken}`)
+      .matchHeader("authorization", `token ${this.accessToken}`)
+  }
+
+  auth() {
+    this._tokenExchange.post("/auth/github", { github_token: this.githubToken }).reply(200, { access_token: this.accessToken })
+    return this
   }
 
   getRepo() {

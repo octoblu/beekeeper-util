@@ -39,6 +39,7 @@ describe("Travis: Configure a new project", function() {
       beforeEach("setup travis endpoints", function() {
         const envVars = [{ name: "SOME_ENV_NAME", value: "some-value" }]
         this.travisMocks
+          .auth()
           .getRepoWithSync()
           .enableRepo()
           .getEnvVars([])
