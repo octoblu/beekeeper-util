@@ -109,7 +109,7 @@
   },
   {
     "key": "travis.token",
-    "env": "BEEKEEPER_GITHUB_TOKEN",
+    "env": "BEEKEEPER_TRAVIS_TOKEN",
     "type": "string"
   },
   {

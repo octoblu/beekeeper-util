@@ -1,6 +1,5 @@
-async             = require 'async'
-colors            = require 'colors'
-program           = require 'commander'
+program          = require 'commander'
+ConfigureService = require './lib/services/configure-service'
 
 Spinner          = require './src/spinner'
 
@@ -33,7 +32,7 @@ class Command
     }
 
   run: =>
-    @configureService.configure @repo, @owner
+    @configureService.configure { @repo, @owner }
       .then =>
         @spinner.succeed 'Configured!'
         process.exit 0

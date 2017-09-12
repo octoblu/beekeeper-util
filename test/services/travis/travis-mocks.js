@@ -67,9 +67,11 @@ class TravisMocks {
       }
       this.authed
         .patch(`/settings/env_vars/${id}?repository_id=travis-repo-id`, {
-          name: name,
-          value: value,
-          public: false,
+          env_var: {
+            name: name,
+            value: value,
+            public: false,
+          },
         })
         .reply(204)
     })
@@ -83,9 +85,11 @@ class TravisMocks {
       }
       this.authed
         .post("/settings/env_vars?repository_id=travis-repo-id", {
-          name: name,
-          value: value,
-          public: false,
+          env_var: {
+            name: name,
+            value: value,
+            public: false,
+          },
         })
         .reply(204)
     })

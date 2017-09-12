@@ -1,5 +1,4 @@
 const { beforeEach, afterEach, describe, it } = global
-const { expect } = require("chai")
 const GithubService = require("../../../lib/services/github-service")
 const GithubMocks = require("./github-mocks")
 

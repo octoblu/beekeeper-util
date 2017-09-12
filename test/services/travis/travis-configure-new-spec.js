@@ -14,6 +14,7 @@ describe("Travis: Configure a new project", function() {
             token: "github-token",
           },
           travis: {
+            enabled: true,
             env: [
               {
                 value: "some-value",

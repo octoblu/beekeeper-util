@@ -11,6 +11,7 @@ describe("Travis: is rate limited", function() {
           token: "github-token",
         },
         travis: {
+          enabled: true,
           env: [
             {
               value: "some-value",

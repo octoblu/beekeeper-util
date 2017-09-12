@@ -1,5 +1,4 @@
 const { beforeEach, afterEach, describe, it } = global
-const { expect } = require("chai")
 const TravisService = require("../../../lib/services/travis-service")
 const TravisMocks = require("./travis-mocks")
 const each = require("lodash/each")
@@ -20,6 +19,7 @@ describe("Travis: Configure an existing project", function() {
             token: "github-token",
           },
           travis: {
+            enabled: true,
             env: this.envVars,
           },
         })
