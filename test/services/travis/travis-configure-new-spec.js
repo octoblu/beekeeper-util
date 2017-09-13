@@ -9,19 +9,16 @@ describe("Travis: Configure a new project", function() {
   each(privates, function(isPrivate) {
     describe(`isPrivate: ${isPrivate}`, function() {
       beforeEach("create service", function() {
+        this.envVars = [
+          {
+            value: "some-value",
+            name: "SOME_ENV_NAME",
+          },
+        ]
         this.sut = new TravisService({
-          github: {
-            token: "github-token",
-          },
-          travis: {
-            enabled: true,
-            env: [
-              {
-                value: "some-value",
-                name: "SOME_ENV_NAME",
-              },
-            ],
-          },
+          travisEnv: this.envVars,
+          githubToken: "github-token",
+          travisEnabled: true,
         })
       })
 
@@ -37,13 +34,12 @@ describe("Travis: Configure a new project", function() {
       })
 
       beforeEach("setup travis endpoints", function() {
-        const envVars = [{ name: "SOME_ENV_NAME", value: "some-value" }]
         this.travisMocks
           .auth()
           .getRepoWithSync()
           .enableRepo()
           .getEnvVars([])
-          .createEnvVars(envVars)
+          .createEnvVars(this.envVars)
       })
 
       beforeEach("call configure", function() {

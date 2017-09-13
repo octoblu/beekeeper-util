@@ -5,9 +5,7 @@ const GithubMocks = require("./github-mocks")
 describe("Github: check isPrivate", function() {
   beforeEach("create service", function() {
     this.sut = new GithubService({
-      github: {
-        token: "github-token",
-      },
+      githubToken: "github-token",
     })
   })
 

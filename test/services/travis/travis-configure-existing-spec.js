@@ -15,13 +15,9 @@ describe("Travis: Configure an existing project", function() {
         ]
 
         this.sut = new TravisService({
-          github: {
-            token: "github-token",
-          },
-          travis: {
-            enabled: true,
-            env: this.envVars,
-          },
+          travisEnv: this.envVars,
+          githubToken: "github-token",
+          travisEnabled: true,
         })
       })
 

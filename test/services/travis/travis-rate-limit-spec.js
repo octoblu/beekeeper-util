@@ -7,18 +7,9 @@ describe("Travis: is rate limited", function() {
   describe("when travis responds with a 403", function() {
     beforeEach("create service", function() {
       this.sut = new TravisService({
-        github: {
-          token: "github-token",
-        },
-        travis: {
-          enabled: true,
-          env: [
-            {
-              value: "some-value",
-              name: "SOME_ENV_NAME",
-            },
-          ],
-        },
+        travisEnv: this.envVars,
+        githubToken: "github-token",
+        travisEnabled: true,
       })
     })
 

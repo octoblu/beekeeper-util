@@ -5,12 +5,8 @@ const GithubMocks = require("./github-mocks")
 describe("Github: check createRelease", function() {
   beforeEach("create service", function() {
     this.sut = new GithubService({
-      github: {
-        token: "github-token",
-        release: {
-          enabled: true,
-        },
-      },
+      githubReleaseEnabled: true,
+      githubToken: "github-token",
     })
   })
 
