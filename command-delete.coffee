@@ -3,7 +3,7 @@ program     = require 'commander'
 semver      = require 'semver'
 packageJSON = require './package.json'
 
-BeekeeperService = require './src/beekeeper-service'
+BeekeeperService = require './lib/services/beekeeper-service'
 
 program
   .version packageJSON.version
@@ -14,7 +14,8 @@ program
 class Command
   constructor: (@config) ->
     process.on 'uncaughtException', @die
-    @beekeeperService = new BeekeeperService { @config }
+    { beekeeper } = @config
+    @beekeeperService = new BeekeeperService { beekeeper }
 
   parseOptions: =>
     program.parse process.argv
@@ -29,11 +30,15 @@ class Command
 
   run: =>
     {repo, owner, tag} = @parseOptions()
+    projectOwner = owner
+    projectName = repo
+    projectVersion = tag
     return @die new Error('Beekeeper must be enabled') unless @config.beekeeper.enabled
-    @beekeeperService.delete { repo, owner, tag }, (error) =>
-      return @die error if error?
-      console.log colors.bold("[DELETED]"), "tag #{tag}"
-      @die()
+    @beekeeperService.delete { projectOwner, projectName, projectVersion }
+      .then =>
+        console.log colors.bold("[DELETED]"), "tag #{tag}"
+        @die()
+      .catch @die
 
   dieHelp: (error) =>
     console.error error.toString()

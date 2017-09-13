@@ -14,35 +14,6 @@ class BeekeeperService
       throw new Error 'Missing beekeeper.uri in config' unless @beekeeper.uri?
     debug 'using beekeeper.uri', { @beekeeper }
 
-  create: ({ owner, repo, tag }, callback) =>
-    return callback null unless @beekeeper.enabled
-    options =
-      baseUrl: @beekeeper.uri
-      uri: "/deployments/#{owner}/#{repo}/#{parseTag(tag)}"
-      json: true
-    @spinner?.start "Beekeeper: Creating release"
-    debug 'create options', options
-    request.post options, (error, response, body) =>
-      return callback error if error?
-      if response.statusCode > 399
-        message = _.get body, 'error', 'Error from beekeeper service'
-        return callback new Error "Beekeeper: #{message}"
-      @spinner?.log "Beekeeper: Released"
-      callback()
-
-  delete: ({ owner, repo, tag }, callback) =>
-    return callback null unless @beekeeper.enabled
-    options =
-      baseUrl: @beekeeper.uri
-      uri: "/deployments/#{owner}/#{repo}/#{parseTag(tag)}"
-      json: true
-    debug 'delete options', options
-    request.delete options, (error, response) =>
-      return callback error if error?
-      if response.statusCode > 499
-        return callback new Error 'Fatal error from beekeeper service'
-      callback()
-
   getTag: ({ owner, repo, tag, filter }, callback) =>
     return callback null unless @beekeeper.enabled
     @_getTag { owner, repo, tag, filter }, (error, deployment) =>
