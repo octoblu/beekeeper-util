@@ -1,7 +1,7 @@
 program          = require 'commander'
 ConfigureService = require './lib/services/configure-service'
 
-Spinner          = require './src/spinner'
+Spinner          = require './lib/models/spinner'
 
 packageJSON       = require './package.json'
 

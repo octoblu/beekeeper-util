@@ -2,12 +2,12 @@ _       = require 'lodash'
 program = require 'commander'
 semver  = require 'semver'
 async   = require 'async'
-Spinner = require './src/spinner'
+Spinner = require './lib/models/spinner'
 
-GithubService    = require './src/github-service.coffee'
-GitService       = require './src/git-service.coffee'
-BeekeeperService = require './src/beekeeper-service.coffee'
-ProjectService   = require './src/project-service.coffee'
+GithubService    = require './lib/services/github-service'
+GitService       = require './src/git-service'
+BeekeeperService = require './src/beekeeper-service'
+ProjectService   = require './src/project-service'
 
 packageJSON   = require './package.json'
 
@@ -31,7 +31,8 @@ class Command
     @spinner = new Spinner()
     @spinner.start("Starting Beekeeper")
     process.on 'uncaughtException', @die
-    @githubService = new GithubService { @config, @spinner }
+    { github } = @config
+    @githubService = new GithubService { github, @spinner }
     @gitService = new GitService { @config, @spinner }
     @beekeeperService = new BeekeeperService { @config, @spinner }
     @projectService = new ProjectService { @config, @spinner }
@@ -72,6 +73,10 @@ class Command
 
   run: =>
     { message, tag, owner, repo, release } = @parseOptions()
+    projectName = repo
+    projectOwner = owner
+    projectVersion = tag
+
     @spinner.log("Releasing v#{tag} (#{release})", '🐝')
     @spinner.start("Beekeeping")
     async.series [
@@ -80,11 +85,13 @@ class Command
       async.apply @projectService.modifyVersion, { tag }
       async.apply @gitService.release, { message, tag }
       async.apply @beekeeperService.create, { owner, repo, tag }
-      async.apply @githubService.createRelease, { owner, repo, tag, message, release }
     ], (error) =>
       return @die error if error?
-      @spinner.succeed("Shipped it!")
-      @die()
+      @githubService.createRelease { projectOwner, projectName, projectVersion, message, release }
+        .then =>
+          @spinner.succeed("Shipped it!")
+          @die()
+        .catch @die
 
   dieHelp: (error) =>
     console.error error.toString()
