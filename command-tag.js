@@ -4,6 +4,7 @@ const OctoDash = require("octodash")
 const packageJSON = require("./package.json")
 const BeekeeperService = require("./lib/services/beekeeper-service")
 const ProjectHelper = require("./lib/helpers/project-helper")
+const first = require("lodash/first")
 
 const projectHelper = new ProjectHelper({ projectRoot: process.cwd() })
 
@@ -49,12 +50,13 @@ const run = async function() {
     version: packageJSON.version,
   })
   const options = octoDash.parseOptions()
-  const { beekeeperUri } = options
+  const tagName = first(options._args)
 
+  const { beekeeperUri, projectVersion, projectName, projectOwner } = options
   const beekeeperService = new BeekeeperService({ beekeeperUri })
 
   try {
-    await beekeeperService.tagDeployment()
+    await beekeeperService.tagDeployment({ projectOwner, projectName, projectVersion, tagName })
   } catch (error) {
     octoDash.die(error)
   }

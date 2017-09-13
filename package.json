@@ -22,9 +22,10 @@
     "beekeeper-update": "./command-update.js",
     "beekeeper-webhook": "./command-webhook.js",
     "beekeeper": "./command.js",
-    "bkc": "./command-configure.js",
+    "bkconfig": "./command-configure.js",
     "bkr": "./command-release.js",
-    "bkt": "./command-tag.js",
+    "bkrelease": "./command-release.js",
+    "bktag": "./command-tag.js",
     "bsn": "./command-status-notify.js",
     "bs": "./command-status.js"
   },
