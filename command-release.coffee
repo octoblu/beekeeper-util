@@ -75,6 +75,7 @@ class Command
     { message, tag, owner, repo, release } = @parseOptions()
     projectName = repo
     projectOwner = owner
+    projectVersion = tag
 
     @spinner.log("Releasing v#{tag} (#{release})", '🐝')
     @spinner.start("Beekeeping")
@@ -86,7 +87,7 @@ class Command
       async.apply @beekeeperService.create, { owner, repo, tag }
     ], (error) =>
       return @die error if error?
-      @githubService.createRelease { projectOwner, projectName, tag, message, release }
+      @githubService.createRelease { projectOwner, projectName, projectVersion, message, release }
         .then =>
           @spinner.succeed("Shipped it!")
           @die()

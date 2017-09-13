@@ -30,7 +30,7 @@ describe("Github: check createRelease", function() {
     const options = {
       projectName: "example-repo-name",
       projectOwner: "some-owner",
-      tag: "1.0.0",
+      projectVersion: "1.0.0",
       message: "some message",
       release: "init",
     }
