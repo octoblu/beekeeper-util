@@ -16,6 +16,11 @@ class BeekeeperMocks {
     return this
   }
 
+  deleteDeployment(tag) {
+    this.authed.delete(`/deployments/some-owner/example-repo-name/${tag}`).reply(204)
+    return this
+  }
+
   cleanup() {
     nock.cleanAll()
   }

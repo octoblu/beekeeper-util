@@ -6,7 +6,7 @@ Spinner = require './lib/models/spinner'
 
 GithubService    = require './lib/services/github-service'
 GitService       = require './src/git-service'
-BeekeeperService = require './src/beekeeper-service'
+BeekeeperService = require './lib/services/beekeeper-service'
 ProjectService   = require './src/project-service'
 
 packageJSON   = require './package.json'
@@ -31,10 +31,10 @@ class Command
     @spinner = new Spinner()
     @spinner.start("Starting Beekeeper")
     process.on 'uncaughtException', @die
-    { github } = @config
+    { github, beekeeper } = @config
     @githubService = new GithubService { github, @spinner }
     @gitService = new GitService { @config, @spinner }
-    @beekeeperService = new BeekeeperService { @config, @spinner }
+    @beekeeperService = new BeekeeperService { beekeeper, @spinner }
     @projectService = new ProjectService { @config, @spinner }
 
   parseOptions: =>
@@ -84,10 +84,11 @@ class Command
       async.apply @projectService.initVersionFile
       async.apply @projectService.modifyVersion, { tag }
       async.apply @gitService.release, { message, tag }
-      async.apply @beekeeperService.create, { owner, repo, tag }
     ], (error) =>
       return @die error if error?
-      @githubService.createRelease { projectOwner, projectName, projectVersion, message, release }
+      @beekeeperService.createDeployment { owner, repo, tag }
+        .then =>
+          @githubService.createRelease { projectOwner, projectName, projectVersion, message, release }
         .then =>
           @spinner.succeed("Shipped it!")
           @die()
