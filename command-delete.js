@@ -1,4 +1,4 @@
 #!/usr/bin/env node
 
-var runCommand = require('./run-command')
-runCommand('./command-delete.coffee')
+var runCommand = require("./run-command")
+runCommand("./command-delete.coffee")

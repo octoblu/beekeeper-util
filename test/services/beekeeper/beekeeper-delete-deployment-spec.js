@@ -9,10 +9,8 @@ describe("Beekeeper: Delete an existing deployment", function() {
     describe(`isPrivate: ${isPrivate}`, function() {
       beforeEach("create service", function() {
         this.sut = new BeekeeperService({
-          beekeeper: {
-            uri: "https://beekeeper.octoblu.com",
-            enabled: true,
-          },
+          beekeeperUri: "https://beekeeper.octoblu.com",
+          beekeeperEnabled: true,
         })
       })
 

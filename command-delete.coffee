@@ -15,7 +15,8 @@ class Command
   constructor: (@config) ->
     process.on 'uncaughtException', @die
     { beekeeper } = @config
-    @beekeeperService = new BeekeeperService { beekeeper }
+    beekeeperUri = beekeeper.uri
+    @beekeeperService = new BeekeeperService { beekeeperUri }
 
   parseOptions: =>
     program.parse process.argv
