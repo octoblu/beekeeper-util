@@ -21,6 +21,11 @@ class BeekeeperMocks {
     return this
   }
 
+  tagDeployment({ tag, tagName }) {
+    this.authed.post(`/deployments/some-owner/example-repo-name/${tag}/tags`, { tagName }).reply(204)
+    return this
+  }
+
   cleanup() {
     nock.cleanAll()
   }

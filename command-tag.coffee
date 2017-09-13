@@ -4,7 +4,7 @@ colors      = require 'colors/safe'
 semver      = require 'semver'
 packageJSON = require './package.json'
 
-BeekeeperService = require './src/beekeeper-service'
+BeekeeperService = require './lib/services/beekeeper-service'
 
 program
   .version packageJSON.version
@@ -17,7 +17,8 @@ program
 class Command
   constructor: (@config) ->
     process.on 'uncaughtException', @die
-    @beekeeperService = new BeekeeperService { @config }
+    { beekeeper } = @config
+    @beekeeperService = new BeekeeperService { beekeeper }
 
   parseOptions: =>
     program.parse process.argv
@@ -37,15 +38,16 @@ class Command
   run: =>
     return @die new Error('Beekeeper must be enabled') unless @config.beekeeper.enabled
     { repo, owner, tag, tagName, @prompt } = @parseOptions()
-    @beekeeperService.getTag { repo, owner, tag }, (error, deployment) =>
+    projectVersion = tag
+    @beekeeperService.getTag { projectVersion }, (error, deployment) =>
       return @die error if error?
       return @printDeploymentMissing({ tag }) unless deployment?
-      @beekeeperService.getTag { repo, owner, tag: 'latest', filter: tagName }, (error, taggedDeployment) =>
+      @beekeeperService.getTag { projectVersion: 'latest', filter: tagName }, (error, taggedDeployment) =>
         return @die error if error?
         return @printAlreadyExists({ tagName, tag }) if taggedDeployment?.tag == tag
         @warnBeforeTag { taggedDeployment, tag, tagName, repo }, (error) =>
           return @die error if error?
-          @beekeeperService.tagDeployment { repo, owner, tag, tagName }, (error) =>
+          @beekeeperService.tagDeployment { projectVersion, tagName }, (error) =>
             return @die error if error?
             @printSuccess({ tagName, tag })
 

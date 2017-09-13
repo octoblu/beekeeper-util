@@ -25,21 +25,6 @@ class BeekeeperService
           return callback null, latest, latest
         callback null, deployment, latest
 
-  tagDeployment: ({ owner, repo, tag, tagName }, callback) =>
-    return callback null unless @beekeeper.enabled
-    options =
-      baseUrl: @beekeeper.uri
-      uri: "/deployments/#{owner}/#{repo}/#{parseTag(tag)}/tags"
-      json: { tagName }
-    debug 'tag deployment options', options
-    request.post options, (error, response, body) =>
-      return callback error if error?
-      if response.statusCode > 399
-        message = _.get body, 'error'
-        message ?= "Unexpected Status Code #{response.statusCode}"
-        return callback new Error message
-      callback()
-
   update: ({ owner, repo, tag, docker_url }, callback) =>
     return callback null unless @beekeeper.enabled
     options =
