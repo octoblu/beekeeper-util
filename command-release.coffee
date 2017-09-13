@@ -2,7 +2,7 @@ _       = require 'lodash'
 program = require 'commander'
 semver  = require 'semver'
 async   = require 'async'
-Spinner = require './src/spinner'
+Spinner = require './lib/models/spinner'
 
 GithubService    = require './lib/services/github-service'
 GitService       = require './src/git-service'
@@ -75,7 +75,7 @@ class Command
     { message, tag, owner, repo, release } = @parseOptions()
     projectName = repo
     projectOwner = owner
-    
+
     @spinner.log("Releasing v#{tag} (#{release})", '🐝')
     @spinner.start("Beekeeping")
     async.series [
