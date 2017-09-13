@@ -18,6 +18,19 @@ class GithubMocks {
     return this
   }
 
+  createRelease() {
+    this.authed
+      .post("/repos/some-owner/example-repo-name/releases", {
+        tag_name: "v1.0.0",
+        target_commitish: "master",
+        name: "v1.0.0",
+        body: "some message",
+        draft: false,
+        prerelease: false,
+      })
+      .reply(201)
+  }
+
   cleanup() {
     nock.cleanAll()
   }
