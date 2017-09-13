@@ -1,13 +1,9 @@
 _       = require 'lodash'
 program = require 'commander'
 semver  = require 'semver'
-async   = require 'async'
 Spinner = require './lib/models/spinner'
 
-GithubService    = require './lib/services/github-service'
-GitService       = require './src/git-service'
-BeekeeperService = require './lib/services/beekeeper-service'
-ProjectService   = require './src/project-service'
+ReleaseService    = require './lib/services/release-service'
 
 packageJSON   = require './package.json'
 
@@ -31,11 +27,7 @@ class Command
     @spinner = new Spinner()
     @spinner.start("Starting Beekeeper")
     process.on 'uncaughtException', @die
-    { github, beekeeper } = @config
-    @githubService = new GithubService { github, @spinner }
-    @gitService = new GitService { @config, @spinner }
-    @beekeeperService = new BeekeeperService { beekeeper, @spinner }
-    @projectService = new ProjectService { @config, @spinner }
+    @releaseService = new ReleaseService { @config, @spinner }
 
   parseOptions: =>
     program.parse process.argv
@@ -73,26 +65,16 @@ class Command
 
   run: =>
     { message, tag, owner, repo, release } = @parseOptions()
-    projectName = repo
-    projectOwner = owner
-    projectVersion = tag
-
-    @spinner.log("Releasing v#{tag} (#{release})", '🐝')
-    @spinner.start("Beekeeping")
-    async.series [
-      async.apply @gitService.check, { tag }
-      async.apply @projectService.initVersionFile
-      async.apply @projectService.modifyVersion, { tag }
-      async.apply @gitService.release, { message, tag }
-    ], (error) =>
-      return @die error if error?
-      @beekeeperService.createDeployment { owner, repo, tag }
-        .then =>
-          @githubService.createRelease { projectOwner, projectName, projectVersion, message, release }
-        .then =>
-          @spinner.succeed("Shipped it!")
-          @die()
-        .catch @die
+    @releaseService.release { message, tag, repo, release, owner }
+      .then =>
+        @spinner.succeed 'Released!'
+        process.exit 0
+      .catch (error) =>
+        return @die error if error?
+        @spinner.warn()
+        @spinner.fail error.toString()
+        process.exit 1
+    return
 
   dieHelp: (error) =>
     console.error error.toString()
