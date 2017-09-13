@@ -12,6 +12,7 @@ describe("Git: release new version", function() {
       tag: sinon.stub(),
       push: sinon.stub(),
       pushTags: sinon.stub(),
+      customBinary: sinon.spy(),
     }
   })
 
@@ -32,7 +33,7 @@ describe("Git: release new version", function() {
 
       beforeEach("setup options", function() {
         this.options = {
-          newProjectVersion: "v1.0.0",
+          projectVersion: "v1.0.0",
           message: "no ragrets",
         }
       })
@@ -57,7 +58,7 @@ describe("Git: release new version", function() {
 
       beforeEach("setup options", function() {
         this.options = {
-          newProjectVersion: "v1.0.0",
+          projectVersion: "v1.0.0",
           message: "no ragrets",
         }
       })
@@ -83,7 +84,7 @@ describe("Git: release new version", function() {
 
       beforeEach("setup options", function() {
         this.options = {
-          newProjectVersion: "v1.0.0",
+          projectVersion: "v1.0.0",
           message: "no ragrets",
         }
       })
@@ -109,7 +110,7 @@ describe("Git: release new version", function() {
 
       beforeEach("setup options", function() {
         this.options = {
-          newProjectVersion: "not-valid-semver",
+          projectVersion: "not-valid-semver",
           message: "no ragrets",
         }
       })
@@ -135,7 +136,7 @@ describe("Git: release new version", function() {
 
     beforeEach("call release", function() {
       const options = {
-        newProjectVersion: "v1.0.0",
+        projectVersion: "v1.0.0",
         message: "no ragrets",
       }
       return this.sut.release(options)
