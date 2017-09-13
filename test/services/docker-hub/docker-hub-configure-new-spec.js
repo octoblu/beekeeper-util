@@ -37,7 +37,7 @@ describe("DockerHub: Configure a new project", function() {
 
       beforeEach("setup docker hub api endpoints", function() {
         this.mockDockerHubApi.login.resolves({ token: uuid.v1() })
-        this.mockDockerHubApi.repository.resolves()
+        this.mockDockerHubApi.repository.rejects(new Error("Object not found"))
         this.mockDockerHubApi.createRepository.resolves()
         this.mockDockerHubApi.createWebhook.resolves({ id: "some-webhook-id" })
         this.mockDockerHubApi.createWebhookHook.resolves()

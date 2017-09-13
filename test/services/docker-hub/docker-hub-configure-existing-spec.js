@@ -50,7 +50,7 @@ describe("DockerHub: Configure an existing project", function() {
             },
           ],
         })
-        this.mockDockerHubApi.createWebhook.resolves({ name: ["already exists"] })
+        this.mockDockerHubApi.createWebhook.resolves({ name: ["A hook with 'Beekeeper v2' name already exists"] })
         this.mockDockerHubApi.createWebhookHook.resolves()
       })
 
