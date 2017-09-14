@@ -1,4 +1,4 @@
-const { beforeEach, afterEach, describe, it } = global
+const { beforeEach, afterEach, describe, expect, it } = global
 const StatusService = require("../../../lib/services/status-service")
 const BeekeeperMocks = require("../beekeeper/beekeeper-mocks")
 
@@ -12,7 +12,7 @@ describe("Status: get the status of a service", function() {
     })
 
     beforeEach("setup beekeeper mocks", function() {
-      this.beekeeperMocks = new BeekeeperMocks()
+      this.beekeeperMocks = new BeekeeperMocks({ isPrivate: false })
     })
 
     afterEach("clean up beekeeper mocks", function() {
@@ -20,25 +20,28 @@ describe("Status: get the status of a service", function() {
     })
 
     beforeEach("setup beekeeper endpoints", function() {
-      this.beekeeperMocks
-        .auth()
-        .getRepoWithSync()
-        .enableRepo()
-        .getEnvVars([])
-        .createEnvVars(this.envVars)
+      this.beekeeperMocks.getDeployment("v1.0.0")
     })
 
-    beforeEach("call configure", function() {
+    beforeEach("call get", async function() {
       const options = {
         projectName: "example-repo-name",
         projectOwner: "some-owner",
-        isPrivate,
+        projectVersion: "v1.0.0",
       }
-      return this.sut.configure(options)
+      this.result = await this.sut.get(options)
     })
 
     it("should call of the beekeeper endpoints", function() {
       this.beekeeperMocks.done()
+    })
+
+    it("should give respond with the correct result", function() {
+      expect(this.result).to.deep.equal({
+        desired: {
+          tag: "v1.0.0",
+        },
+      })
     })
   })
 })

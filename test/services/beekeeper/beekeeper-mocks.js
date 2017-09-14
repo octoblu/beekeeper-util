@@ -3,8 +3,8 @@ const bindAll = require("lodash/fp/bindAll")
 
 class BeekeeperMocks {
   constructor({ isPrivate }) {
-    this.isPrivate = isPrivate
     bindAll(Object.getOwnPropertyNames(BeekeeperMocks.prototype), this)
+    this.isPrivate = isPrivate
 
     this.authed = nock("https://beekeeper.octoblu.com")
       .matchHeader("accept", "application/json")
@@ -21,11 +21,12 @@ class BeekeeperMocks {
     return this
   }
 
-  getDeployment(tag, tags = []) {
-    this.authed
-      .get(`/deployments/some-owner/example-repo-name/${tag}`)
-      .query({ tags })
-      .reply(200, {})
+  getDeployment(tag, filterTags) {
+    const req = this.authed.get(`/deployments/some-owner/example-repo-name/${tag}`)
+    if (filterTags) req.query({ tags: filterTags })
+    req.reply(200, {
+      tag,
+    })
     return this
   }
 
