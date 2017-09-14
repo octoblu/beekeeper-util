@@ -4,8 +4,11 @@ const OctoDash = require("octodash")
 const packageJSON = require("./package.json")
 const ConfigureService = require("./lib/services/configure-service")
 const ProjectHelper = require("./lib/helpers/project-helper")
+const Spinner = require("./lib/models/spinner")
 
-const projectHelper = new ProjectHelper({ projectRoot: process.cwd() })
+const projectRoot = process.cwd()
+
+const projectHelper = new ProjectHelper({ projectRoot })
 
 const CLI_OPTIONS = [
   {
@@ -15,6 +18,13 @@ const CLI_OPTIONS = [
     required: true,
     help: "Beekeeper Uri",
     helpArg: "URL",
+  },
+  {
+    names: ["project-has-dockerfile"],
+    type: "string",
+    env: "BEEKEEPER_PROJECT_HAS_DOCKERFILE",
+    help: "Project has ./Dockerfile",
+    default: projectHelper.hasDockerfile(),
   },
   {
     names: ["project-owner"],
@@ -39,14 +49,6 @@ const CLI_OPTIONS = [
     help: "Github token",
   },
   {
-    names: ["travis-enabled", "enable-travis"],
-    type: "string",
-    env: "BEEKEEPER_TRAVIS_ENABLED",
-    required: true,
-    default: true,
-    help: "Travis enabled",
-  },
-  {
     names: ["beekeeper-enabled", "enable-beekeeper"],
     type: "string",
     env: "BEEKEEPER_ENABLED",
@@ -55,11 +57,56 @@ const CLI_OPTIONS = [
     help: "Beekeeper enabled",
   },
   {
+    names: ["codecov-enabled", "enable-codecov"],
+    type: "string",
+    env: "BEEKEEPER_CODECOV_ENABLED",
+    required: true,
+    default: true,
+    help: "Codecov enabled",
+  },
+  {
+    names: ["codecov-token"],
+    type: "string",
+    env: "BEEKEEPER_CODECOV_TOKEN",
+    required: true,
+    help: "Codecov token",
+  },
+  {
+    names: ["codefresh-enabled", "enable-codefresh"],
+    type: "string",
+    env: "BEEKEEPER_CODEFRESH_ENABLED",
+    required: true,
+    default: true,
+    help: "Codefresh enabled",
+  },
+  {
+    names: ["codefresh-token"],
+    type: "string",
+    env: "BEEKEEPER_CODEFRESH_TOKEN",
+    required: true,
+    help: "Codefresh token",
+  },
+  {
+    names: ["travis-enabled", "enable-travis"],
+    type: "string",
+    env: "BEEKEEPER_TRAVIS_ENABLED",
+    required: true,
+    default: true,
+    help: "Travis enabled",
+  },
+  {
     names: ["travis-token"],
     type: "string",
     env: "BEEKEEPER_TRAVIS_TOKEN",
     required: true,
     help: "Travis token",
+  },
+  {
+    names: ["npm-token"],
+    type: "string",
+    env: "BEEKEEPER_NPM_TOKEN",
+    required: true,
+    help: "NPM token",
   },
 ]
 
@@ -72,12 +119,42 @@ const run = async function() {
   })
   const options = octoDash.parseOptions()
 
-  const { beekeeperUri, projectName, projectOwner, travisEnabled, travisToken, githubToken } = options
-  const configureService = new ConfigureService({ beekeeperUri, githubToken, travisToken, travisEnabled })
+  const {
+    beekeeperUri,
+    projectHasDockerfile,
+    projectName,
+    projectOwner,
+    travisEnabled,
+    travisToken,
+    githubToken,
+    codecovEnabled,
+    codecovToken,
+    codefreshEnabled,
+    codefreshToken,
+    npmToken,
+  } = options
+
+  const spinner = new Spinner()
+
+  const configureService = new ConfigureService({
+    projectHasDockerfile,
+    projectRoot,
+    beekeeperUri,
+    githubToken,
+    travisToken,
+    travisEnabled,
+    codecovEnabled,
+    codecovToken,
+    codefreshEnabled,
+    codefreshToken,
+    npmToken,
+    spinner,
+  })
 
   try {
     await configureService.configure({ projectOwner, projectName })
   } catch (error) {
+    console.log({ error })
     octoDash.die(error)
   }
 

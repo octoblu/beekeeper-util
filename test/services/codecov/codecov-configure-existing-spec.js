@@ -10,16 +10,10 @@ describe("Codecov: Configure an existing project", function() {
     describe(`isPrivate: ${isPrivate}`, function() {
       beforeEach("create service", function() {
         this.sut = new CodecovService({
-          github: {
-            token: "github-token",
-          },
-          travis: {
-            enabled: true,
-          },
-          codecov: {
-            token: "codecov-token",
-            enabled: true,
-          },
+          githubToken: "github-token",
+          travisEnabled: true,
+          codecovToken: "codecov-token",
+          codecovEnabled: true,
         })
       })
 

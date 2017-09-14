@@ -9,20 +9,12 @@ describe("Codefresh: Configure a new project", function() {
     describe(`isPrivate: ${isPrivate}`, function() {
       beforeEach("create service", function() {
         this.sut = new CodefreshService({
-          npm: {
-            token: "npm-token",
-          },
-          project: {
-            root: "~/tmp",
-            hasDockerfile: true,
-          },
-          beekeeper: {
-            uri: "http://localhost:3000",
-          },
-          codefresh: {
-            enabled: true,
-            token: "codefresh-token",
-          },
+          npmToken: "npm-token",
+          projectRoot: "~/tmp",
+          projectHasDockerfile: true,
+          beekeeperUri: "http://localhost:3000",
+          codefreshEnabled: true,
+          codefreshToken: "codefresh-token",
         })
       })
 

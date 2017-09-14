@@ -22,11 +22,9 @@ describe("DockerHub: Configure a new project", function() {
 
       beforeEach("create service", function() {
         this.sut = new DockerHubService({
-          dockerHub: {
-            enabled: true,
-            username: "some-docker-hub-username",
-            password: "some-docker-hub-password",
-          },
+          dockerHubEnabled: true,
+          dockerHubUsername: "some-docker-hub-username",
+          dockerHubPassword: "some-docker-hub-password",
           beekeeperEnabled: true,
           beekeeperUri: "https://bk-user:bk-password@beekeeper.example.com",
           mockDockerHubApi: this.mockDockerHubApi,

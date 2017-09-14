@@ -18,9 +18,7 @@ describe("Git: release new version", function() {
 
   beforeEach("create service", function() {
     this.sut = new GitService({
-      project: {
-        root: path.join("/tmp", "test-beekeeper-project"),
-      },
+      projectRoot: path.join("/tmp", "test-beekeeper-project"),
       gitMock: this.gitMock,
     })
   })
