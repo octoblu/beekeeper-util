@@ -21,6 +21,14 @@ class BeekeeperMocks {
     return this
   }
 
+  getDeployment(tag, tags = []) {
+    this.authed
+      .get(`/deployments/some-owner/example-repo-name/${tag}`)
+      .query({ tags })
+      .reply(200, {})
+    return this
+  }
+
   tagDeployment({ tag, tagName }) {
     this.authed.post(`/deployments/some-owner/example-repo-name/${tag}/tags`, { tagName }).reply(204)
     return this
