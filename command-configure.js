@@ -5,6 +5,7 @@ const packageJSON = require("./package.json")
 const ConfigureService = require("./lib/services/configure-service")
 const ProjectHelper = require("./lib/helpers/project-helper")
 const Spinner = require("./lib/models/spinner")
+const path = require("path")
 
 const projectRoot = process.cwd()
 
@@ -102,6 +103,13 @@ const CLI_OPTIONS = [
     help: "Travis token",
   },
   {
+    names: ["travis-json-file"],
+    type: "string",
+    env: "BEEKEEPER_TRAVIS_JSON_FILE",
+    help: "Travis Beekeeper JSON file",
+    default: path.join(projectRoot, ".beekeeper-travis.json"),
+  },
+  {
     names: ["npm-token"],
     type: "string",
     env: "BEEKEEPER_NPM_TOKEN",
@@ -126,6 +134,7 @@ const run = async function() {
     projectOwner,
     travisEnabled,
     travisToken,
+    travisJsonFile,
     githubToken,
     codecovEnabled,
     codecovToken,
@@ -143,6 +152,7 @@ const run = async function() {
     githubToken,
     travisToken,
     travisEnabled,
+    travisJsonFile,
     codecovEnabled,
     codecovToken,
     codefreshEnabled,
