@@ -21,6 +21,16 @@ class BeekeeperMocks {
     return this
   }
 
+  updateDeployment(tag, dockerUrl) {
+    this.authed.patch(`/deployments/some-owner/example-repo-name/${tag}`, { docker_url: dockerUrl }).reply(204)
+    return this
+  }
+
+  webhookDeployment(tag, webhookType, ciPassing) {
+    this.authed.post(`/webhooks/${webhookType}/some-owner/example-repo-name`, { tag, ci_passing: ciPassing }).reply(204)
+    return this
+  }
+
   tagDeployment({ tag, tagName }) {
     this.authed.post(`/deployments/some-owner/example-repo-name/${tag}/tags`, { tagName }).reply(204)
     return this

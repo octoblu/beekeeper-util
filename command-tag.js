@@ -5,6 +5,7 @@ const packageJSON = require("./package.json")
 const BeekeeperService = require("./lib/services/beekeeper-service")
 const ProjectHelper = require("./lib/helpers/project-helper")
 const first = require("lodash/first")
+const Spinner = require("./lib/models/spinner")
 
 const projectHelper = new ProjectHelper({ projectRoot: process.cwd() })
 
@@ -55,12 +56,19 @@ const run = async function() {
   const { beekeeperUri, projectVersion, projectName, projectOwner } = options
   const beekeeperService = new BeekeeperService({ beekeeperUri })
 
+  const spinner = new Spinner()
+  if (spinner) spinner.log(`Tagging ${projectOwner}/${projectName}/${projectVersion} (${tagName})`, "🐝")
+  if (spinner) spinner.start("Tagging")
+
   try {
     await beekeeperService.tagDeployment({ projectOwner, projectName, projectVersion, tagName })
   } catch (error) {
+    if (spinner) spinner.warn()
+    if (spinner) spinner.fail(error)
     octoDash.die(error)
   }
 
+  if (spinner) spinner.succeed("Tagged")
   octoDash.die() // exits with status 0
 }
 

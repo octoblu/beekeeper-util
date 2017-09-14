@@ -4,7 +4,7 @@ const BeekeeperMocks = require("./beekeeper-mocks")
 const each = require("lodash/each")
 const privates = [true, false]
 
-describe("Beekeeper: Delete an existing deployment", function() {
+describe("Beekeeper: Update an existing deployment", function() {
   each(privates, function(isPrivate) {
     describe(`isPrivate: ${isPrivate}`, function() {
       beforeEach("create service", function() {
@@ -26,17 +26,18 @@ describe("Beekeeper: Delete an existing deployment", function() {
       })
 
       beforeEach("setup beekeeper endpoints", function() {
-        this.beekeeperMocks.deleteDeployment("v1.0.0")
+        this.beekeeperMocks.updateDeployment("v1.0.0", "http://docker.com")
       })
 
-      beforeEach("call deleteDeployment", function() {
+      beforeEach("call updateDeployment", function() {
         const options = {
           projectName: "example-repo-name",
           projectOwner: "some-owner",
           isPrivate,
           projectVersion: "1.0.0",
+          dockerUrl: "http://docker.com",
         }
-        return this.sut.deleteDeployment(options)
+        return this.sut.updateDeployment(options)
       })
 
       it("should call all of the beekeeper endpoints", function() {
