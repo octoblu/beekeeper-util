@@ -3,8 +3,8 @@ const bindAll = require("lodash/fp/bindAll")
 
 class BeekeeperMocks {
   constructor({ isPrivate }) {
-    this.isPrivate = isPrivate
     bindAll(Object.getOwnPropertyNames(BeekeeperMocks.prototype), this)
+    this.isPrivate = isPrivate
 
     this.authed = nock("https://beekeeper.octoblu.com")
       .matchHeader("accept", "application/json")
@@ -29,6 +29,14 @@ class BeekeeperMocks {
   webhookDeployment(tag, webhookType, ciPassing) {
     this.authed.post(`/webhooks/${webhookType}/some-owner/example-repo-name`, { tag, ci_passing: ciPassing }).reply(204)
     return this
+  }
+
+  getDeployment(tag, filterTags) {
+    const req = this.authed.get(`/deployments/some-owner/example-repo-name/${tag}`)
+    if (filterTags) req.query({ tags: filterTags })
+    req.reply(200, {
+      tag,
+    })
   }
 
   tagDeployment({ tag, tagName }) {
