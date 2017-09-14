@@ -37,6 +37,7 @@ class BeekeeperMocks {
     req.reply(200, {
       tag,
     })
+    return this
   }
 
   tagDeployment({ tag, tagName }) {
