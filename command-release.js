@@ -66,6 +66,14 @@ const CLI_OPTIONS = [
     help: "Github token",
   },
   {
+    names: ["github-release-enabled", "enable-github-release"],
+    type: "boolarg",
+    env: "BEEKEEPER_GITHUB_RELEASE_ENABLED",
+    required: true,
+    default: true,
+    help: "Github release enabled",
+  },
+  {
     names: ["github-draft"],
     type: "bool",
     env: "BEEKEEPER_GITHUB_DRAFT",
@@ -81,7 +89,7 @@ const CLI_OPTIONS = [
   },
   {
     names: ["beekeeper-enabled", "enable-beekeeper"],
-    type: "string",
+    type: "boolarg",
     env: "BEEKEEPER_ENABLED",
     required: true,
     default: true,
@@ -138,8 +146,25 @@ const run = async function() {
     version: packageJSON.version,
   })
   const options = octoDash.parseOptions()
+  const message = first(options._argv)
 
-  const { beekeeperUri, beekeeperEnabled, projectName, projectOwner, githubToken, projectVersion, init, major, premajor, minor, preminor, patch, prepatch, prerelease } = options
+  const {
+    beekeeperUri,
+    beekeeperEnabled,
+    projectName,
+    projectOwner,
+    githubToken,
+    githubReleaseEnabled,
+    projectVersion,
+    init,
+    major,
+    premajor,
+    minor,
+    preminor,
+    patch,
+    prepatch,
+    prerelease,
+  } = options
 
   const release = checkExclusiveOptions({
     init,
@@ -161,11 +186,12 @@ const run = async function() {
     beekeeperEnabled,
     beekeeperUri,
     githubToken,
+    githubReleaseEnabled,
     spinner,
   })
 
   try {
-    await releaseService.release({ projectOwner, projectName, release, projectVersion: newProjectVersion })
+    await releaseService.release({ projectOwner, projectName, release, projectVersion: newProjectVersion, message })
   } catch (error) {
     console.log({ error })
     octoDash.die(error)

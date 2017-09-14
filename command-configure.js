@@ -50,7 +50,7 @@ const CLI_OPTIONS = [
   },
   {
     names: ["beekeeper-enabled", "enable-beekeeper"],
-    type: "string",
+    type: "boolarg",
     env: "BEEKEEPER_ENABLED",
     required: true,
     default: true,
@@ -58,7 +58,7 @@ const CLI_OPTIONS = [
   },
   {
     names: ["codecov-enabled", "enable-codecov"],
-    type: "string",
+    type: "boolarg",
     env: "BEEKEEPER_CODECOV_ENABLED",
     required: true,
     default: true,
@@ -73,7 +73,7 @@ const CLI_OPTIONS = [
   },
   {
     names: ["codefresh-enabled", "enable-codefresh"],
-    type: "string",
+    type: "boolarg",
     env: "BEEKEEPER_CODEFRESH_ENABLED",
     required: true,
     default: true,
@@ -88,7 +88,7 @@ const CLI_OPTIONS = [
   },
   {
     names: ["travis-enabled", "enable-travis"],
-    type: "string",
+    type: "boolarg",
     env: "BEEKEEPER_TRAVIS_ENABLED",
     required: true,
     default: true,
