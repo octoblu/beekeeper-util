@@ -1,13 +1,13 @@
-require('coffee-script/register')
+require("coffee-script/register")
 module.exports = function(commandFile) {
   var Command = require(commandFile)
-  var BeekeeperConfig = require('./src/beekeeper-config.coffee')
+  var BeekeeperConfig = require("./src/beekeeper-config.coffee")
   new BeekeeperConfig().get(function(error, config) {
-    if (process.env['BEEKEEPER_DEBUG_CONFIG'] == 'true') {
-      console.log(JSON.stringify(config, null ,2))
+    if (process.env["BEEKEEPER_DEBUG_CONFIG"] == "true") {
+      console.log(JSON.stringify(config, null, 2))
     }
     if (error) {
-      console.error('get config error', error)
+      console.error("get config error", error)
     }
     new Command(config).run()
   })
