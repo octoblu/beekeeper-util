@@ -8,38 +8,11 @@ semverRegex = require 'semver-regex'
 debug  = require('debug')('beekeeper-util:project-service')
 
 class ProjectService
-  constructor: ({ config, @spinner }) ->
-    throw new Error 'Missing config argument' unless config?
-    {
-      @beekeeper,
-      @project,
-      @codecov,
-      @travis,
-      @docker
-    } = config
-    if @beekeeper.enabled
-      throw new Error 'Missing beekeeper.uri in config' unless @beekeeper.uri?
-    throw new Error 'Missing project.root in config' unless @project.root?
-    throw new Error 'Missing project.language in config' unless @project.language?
-    throw new Error 'Missing project.versionFileName in config' unless @project.versionFileName?
-    @travisYml = path.join @project.root, '.travis.yml'
-    @packagePath = path.join @project.root, 'package.json'
-    @dockerFilePath = path.join @project.root, 'Dockerfile'
-    @dockerignorePath = path.join @project.root, '.dockerignore'
-    @versionFile = path.join @project.root, @project.versionFileName
-
-  configure: ({ isPrivate }, callback) =>
-    @_modifyTravis { isPrivate }, (error) =>
-      return callback error if error?
-      @_modifyDockerignore (error) =>
-        return callback error if error?
-        @_modifyPackage callback
-
-  initVersionFile: (callback) =>
-    return callback null unless @project.versionFileName == 'VERSION'
-    fs.access @versionFile, fs.constants.F_OK, (error) =>
-      return callback null unless error?
-      @modifyVersion { tag: '1.0.0' }, callback
+  constructor: ({ @projectRoot, @projectVersionFile, @spinner }) ->
+    throw new Error 'Missing projectRoot in config' unless @projectRoot?
+    throw new Error 'Missing projectVersionFile in config' unless @projectVersionFile?
+    @packagePath = path.join @projectRoot, 'package.json'
+    @versionFile = @projectVersionFile
 
   modifyVersion: ({ tag }, callback) =>
     version = semver.clean(tag)
@@ -54,107 +27,5 @@ class ProjectService
       catch
         newContents = _.replace contents, semverRegex(), version
       fs.writeFile @versionFile, newContents, callback
-
-  _modifyPackage: (callback) =>
-    return callback() unless @project.language == 'node'
-    return callback null unless @codecovEnabled
-    packageJSON = fs.readJsonSync @packagePath
-    orgPackage = _.cloneDeep packageJSON
-    packageJSON.scripts ?= {}
-    packageJSON.scripts['test'] ?= 'mocha'
-    packageJSON.scripts['coverage'] ?= 'nyc npm test'
-    packageJSON.scripts['mocha:json'] ?= 'env NPM_ENV=test mocha --reporter json > coverage/mocha.json'
-    packageJSON.scripts['test:watch'] ?= 'mocha -w -R mocha-multi --reporter-options spec=-,mocha-osx-reporter=-'
-    packageJSON.devDependencies ?= {}
-    packageJSON.devDependencies['nyc'] ?= '^10.1.2'
-    packageJSON.devDependencies['mocha-osx-reporter'] ?= '^0.1.2'
-    packageJSON.devDependencies['mocha-multi'] ?= '^0.10.0'
-    packageJSON.devDependencies['mocha'] ?= '^3.2.0'
-    packageJSON.nyc ?= {
-      cache: true
-      reporter: [
-        'text-summary'
-        'lcov'
-        'json'
-      ]
-      extension: [
-        '.coffee'
-      ]
-    }
-    return callback null if _.isEqual packageJSON, orgPackage
-    fs.writeJson @packagePath, packageJSON, { spaces: 2 }, callback
-
-  _defaultTravisFile: () =>
-    if @project.language == 'node'
-      return {
-        language: 'node_js'
-        node_js: ['8']
-        branches:
-          only: ["/^v[0-9]/"]
-      }
-    if @project.language == 'golang'
-      return {
-        language: 'go'
-        go: ['1.9']
-        branches:
-          only: ["/^v[0-9]/"]
-      }
-    return { }
-
-  _initTravisIfNeed: (callback) =>
-    return callback null unless @travisEnabled
-    fs.access @travisYml, fs.constants.F_OK | fs.constants.W_OK, (error) =>
-      return callback null unless error?
-      yaml.write @travisYml, @_defaultTravisFile(), callback
-
-  _modifyTravis: ({ isPrivate }, callback) =>
-    return callback null unless @travisEnabled
-    @_initTravisIfNeed (error) =>
-      return callback error if error?
-      yaml.read @travisYml, (error, data) =>
-        return callback error if error?
-        return callback new Error('Missing .travis.yml') unless data?
-        orgData = _.cloneDeep data
-        type = 'pro' if isPrivate
-        type ?= 'org'
-        if @beekeeper.enabled
-          urlParts = url.parse @beekeeper.uri
-          _.set urlParts, 'slashes', true
-          delete urlParts.auth
-          delete urlParts.password
-          delete urlParts.username
-          _.set urlParts, 'pathname', '/webhooks/travis:ci'
-          webhookUrl = url.format urlParts
-          _.set data, 'notifications.webhooks', [webhookUrl]
-        data.after_success ?= []
-        after_success = []
-        if @project.type == 'node'
-          after_success = [
-            'npm run coverage'
-            'npm run mocha:json'
-            'bash <(curl -s https://codecov.io/bash)'
-            'bash <(curl -s https://codecov.octoblu.com/bash)'
-          ]
-        _.pullAll data.after_success, after_success
-        data.after_success = _.concat data.after_success, after_success
-        delete data.after_success if _.isEmpty data.after_success
-        return callback null if _.isEqual orgData, data
-        yaml.write @travisYml, data, callback
-
-  _modifyDockerignore: (callback) =>
-    return callback null unless @docker.hasDockerFile
-    @_getFile @dockerignorePath, (error, contents) =>
-      return callback error if error?
-      newContents = contents.replace('test\n', '')
-      return callback null if contents == newContents
-      fs.writeFile @dockerignorePath, "#{newContents}\n", callback
-
-  _getFile: (filePath, callback) =>
-    fs.access filePath, fs.constants.R_OK, (error) =>
-      return callback null, '' if _.get(error, 'code') == 'ENOENT'
-      return callback error if error?
-      fs.readFile filePath, 'utf8', (error, contents='') =>
-        return callback error if error?
-        callback null, contents.toString()
 
 module.exports = ProjectService
