@@ -4,11 +4,14 @@ const OctoDash = require("octodash")
 const packageJSON = require("./package.json")
 const ReleaseService = require("./lib/services/release-service")
 const ProjectHelper = require("./lib/helpers/project-helper")
+const semverHelper = require("./lib/helpers/semver-helper")
 const Spinner = require("./lib/models/spinner")
 const map = require("lodash/map")
 const compact = require("lodash/compact")
 const first = require("lodash/first")
 const isEmpty = require("lodash/isEmpty")
+const parseBeekeeperEnv = require("./lib/helpers/parse-beekeeper-env")
+const path = require("path")
 
 const projectRoot = process.cwd()
 
@@ -139,14 +142,16 @@ const CLI_OPTIONS = [
 ]
 
 const run = async function() {
+  const filePath = path.join(projectRoot, ".beekeeper.env")
+  const beekeeperEnv = parseBeekeeperEnv({ env: process.env, filePath })
   const octoDash = new OctoDash({
     argv: process.argv,
+    env: beekeeperEnv,
     cliOptions: CLI_OPTIONS,
     name: packageJSON.name,
     version: packageJSON.version,
   })
   const options = octoDash.parseOptions()
-  const message = first(options._argv)
 
   const {
     beekeeperUri,
@@ -155,6 +160,8 @@ const run = async function() {
     projectOwner,
     githubToken,
     githubReleaseEnabled,
+    githubDraft,
+    githubPrerelease,
     projectVersion,
     init,
     major,
@@ -187,13 +194,17 @@ const run = async function() {
     beekeeperUri,
     githubToken,
     githubReleaseEnabled,
+    githubDraft,
+    githubPrerelease,
     spinner,
   })
+
+  const messageArg = first(options._args)
+  const message = messageArg ? `${semverHelper.getTag(newProjectVersion)} ${messageArg}` : semverHelper.getTag(newProjectVersion)
 
   try {
     await releaseService.release({ projectOwner, projectName, release, projectVersion: newProjectVersion, message })
   } catch (error) {
-    console.log({ error })
     octoDash.die(error)
   }
 

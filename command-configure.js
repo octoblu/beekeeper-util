@@ -154,7 +154,6 @@ const run = async function() {
   try {
     await configureService.configure({ projectOwner, projectName })
   } catch (error) {
-    console.log({ error })
     octoDash.die(error)
   }
 
