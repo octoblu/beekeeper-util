@@ -8,7 +8,7 @@
 
 ## Introduction
 
-The utility for the [beekeeper-service](https://github.com/octoblu/beekeeper-service) and other deployment related services.
+The utility for the [beekeeper-service](https://github.com/octoblu/beekeeper-service) and other deployment related services. Beekeeper Util can be controlled through a number of flags and/or environment variables.
 
 ## Installing
 
@@ -16,13 +16,59 @@ The utility for the [beekeeper-service](https://github.com/octoblu/beekeeper-ser
 npm install --global beekeeper-util
 ```
 
-**For the octoblu team:** Make sure you have the latest dotfiles.
+## Setting Defaults
+
+By default all services are enabled on configure/release. If you would like to prevent certain integrations from being automatically set up, you can disable them by creating a `.beekeeper.env` file in the root of your project. The env file is parsed and will be applied as if they were set in your environment. *DO NOT* place secrets or other confidential information in this file.
+
+#### Example .beekeeper.env
+```
+BEEKEEPER_ENABLED=false
+BEEKEEPER_GITHUB_RELEASE_ENABLED=false
+```
+
+## Travis Environment variables
+
+Beekeeper Util allows you to set up default travis environment variables for your project. It also allows you to remap environment variables set in your environment into differently named environment variables in Travis (e.g. `BEEKEEPER_NPM_TOKEN` => `NPM_TOKEN`). Create a .beekeeper-travis.json file in the root of your project to enable this feature. Whenever `beekeeper-configure` is called, these environment variables will be added to your travis configuration. You can then reference them in your travis.yml without needing to encrypt them first. All environment variables are encrypted by travis.
+
+There are two types of variables, static values (using the `value` key in your json object), or environment variables (using the `env` key in your json object). The `env` option will take the current value in the environment, encrypt and assign that variable to your travis configuration.
+
+#### Example .beekeeper-travis.json
+```json
+{
+  "env": [
+    {
+      "name": "DEBUG",
+      "value": "meshblu-connector-*,octodash"
+    },
+    {
+      "name": "MESHBLU_CONNECTOR_GPG_KEY_ID",
+      "env": "BEEKEEPER_MESHBLU_CONNECTOR_GPG_KEY_ID"
+    }
+  ]
+}
+```
 
 ## Commands
 
+### beekeeper-configure (alias `bkc`)
+
+Configure your project.
+
+`BEEKEEPER_ENABLED`: Set up beekeeper docker automatic deployments, requires a `Dockerfile` in project root.
+`BEEKEEPER_CODEFRESH_ENABLED`: Set up codefresh for automatic docker builds, requires a `Dockerfile` in project root.
+`BEEKEEPER_CODECOV_ENABLED`: Set up Codecov, will only work for private repos.
+`BEEKEEPER_TRAVIS_ENABLED`: Set up travis-ci, will automatically detect if your github repo is private and access the proper travis-ci environment.
+
 ```bash
-beekeeper --help
+beekeeper-configure
 ```
+
+### beekeeper-release (alias `bkr`)
+
+Tag a release and (optionally) trigger an automatic deployment using semver to create a proper version number and tag. Uses --patch by default.
+
+`BEEKEEPER_ENABLED`: Create a deployment in beekeeper, used to update docker swarm automatically.
+`BEEKEEPER_GITHUB_RELEASE_ENABLED`: Create a release in github.
 
 ## License
 

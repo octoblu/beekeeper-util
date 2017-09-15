@@ -50,6 +50,7 @@
     "commander": "^2.10.0",
     "dashdash": "^1.14.1",
     "debug": "^2.6.8",
+    "dotenv": "^4.0.0",
     "find-versions": "^2.0.0",
     "fs-extra": "^4.0.1",
     "git-state": "^4.0.0",
