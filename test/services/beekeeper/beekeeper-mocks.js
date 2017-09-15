@@ -1,5 +1,7 @@
 const nock = require("nock")
 const bindAll = require("lodash/fp/bindAll")
+const size = require("lodash/size")
+const join = require("lodash/join")
 
 class BeekeeperMocks {
   constructor({ isPrivate }) {
@@ -31,12 +33,24 @@ class BeekeeperMocks {
     return this
   }
 
-  getDeployment(tag, filterTags) {
+  getDeployment(tag, filterTags = []) {
     const req = this.authed.get(`/deployments/some-owner/example-repo-name/${tag}`)
-    if (filterTags) req.query({ tags: filterTags })
+    if (size(filterTags)) req.query({ tags: join(filterTags, ",") })
     req.reply(200, {
       tag,
+      owner_name: "some-owner",
+      repo_name: "example-repo-name",
+      ci_passing: true,
+      docker_url: `some-owner/example-repo-name:${tag}`,
+      tags: filterTags,
     })
+    return this
+  }
+
+  getMissingDeployment(tag, filterTags = []) {
+    const req = this.authed.get(`/deployments/some-owner/example-repo-name/${tag}`)
+    if (size(filterTags)) req.query({ tags: join(filterTags, ",") })
+    req.reply(404)
     return this
   }
 
