@@ -44,19 +44,17 @@ describe("Status: render the status of a docker disabled service", function() {
     })
 
     it("should give respond with the correct template", function() {
-      const template = `
-      Status: Deployed
-      Current:
-        Tag: v1.0.0
-        CI Build: passed
-      Latest:
-        Tag: v1.0.0
-        CI Build: passed
-      Running:
-        Tag: v1.0.0
-        CI Build: passed
-      `
-      expect(this.result).to.equal(template.trim())
+      const template = `Status: Deployed
+Current:
+  Tag: v1.0.0
+  CI Build: passed
+Latest:
+  Tag: v1.0.0
+  CI Build: passed
+Running:
+  Tag: v1.0.0
+  CI Build: passed`
+      expect(this.result).to.equal(template)
     })
   })
 
@@ -102,19 +100,17 @@ describe("Status: render the status of a docker disabled service", function() {
     })
 
     it("should give respond with the correct template", function() {
-      const template = `
-      Status: Deploying...
-      Current:
-        Tag: v1.0.0
-        CI Build: passed
-      Latest:
-        Tag: v2.0.0
-        CI Build: passed
-      Running:
-        Tag: v1.0.0
-        CI Build: passed
-      `
-      expect(this.result).to.equal(template.trim())
+      const template = `Status: Deploying...
+Current:
+  Tag: v1.0.0
+  CI Build: passed
+Latest:
+  Tag: v2.0.0
+  CI Build: passed
+Running:
+  Tag: v1.0.0
+  CI Build: passed`
+      expect(this.result).to.equal(template)
     })
   })
 
@@ -139,16 +135,14 @@ describe("Status: render the status of a docker disabled service", function() {
     })
 
     it("should give respond with the correct template", function() {
-      const template = `
-      Error: Deployment not found
-      Current:
-        Error: Not found
-      Latest:
-        Error: Not found
-      Running:
-        Error: Not found
-      `
-      expect(this.result).to.equal(template.trim())
+      const template = `Error: Deployment not found
+Current:
+  Error: Not found
+Latest:
+  Error: Not found
+Running:
+  Error: Not found`
+      expect(this.result).to.equal(template)
     })
   })
 
@@ -194,19 +188,17 @@ describe("Status: render the status of a docker disabled service", function() {
     })
 
     it("should give respond with the correct template", function() {
-      const template = `
-      Status: Deploying...
-      Current:
-        Tag: v1.0.0
-        CI Build: passed
-      Latest:
-        Tag: v2.0.0
-        CI Build: passed
-      Running:
-        Tag: v1.0.0
-        CI Build: passed
-      `
-      expect(this.result).to.equal(template.trim())
+      const template = `Status: Deploying...
+Current:
+  Tag: v1.0.0
+  CI Build: passed
+Latest:
+  Tag: v2.0.0
+  CI Build: passed
+Running:
+  Tag: v1.0.0
+  CI Build: passed`
+      expect(this.result).to.equal(template)
     })
   })
 
@@ -250,19 +242,17 @@ describe("Status: render the status of a docker disabled service", function() {
     })
 
     it("should give respond with the correct template", function() {
-      const template = `
-      Status: Pending...
-      Current:
-        Tag: v1.0.0
-        CI Build: pending...
-      Latest:
-        Tag: v2.0.0
-        CI Build: failed
-      Running:
-        Tag: v1.0.0
-        CI Build: passed
-      `
-      expect(this.result).to.equal(template.trim())
+      const template = `Status: Pending...
+Current:
+  Tag: v1.0.0
+  CI Build: pending...
+Latest:
+  Tag: v2.0.0
+  CI Build: failed
+Running:
+  Tag: v1.0.0
+  CI Build: passed`
+      expect(this.result).to.equal(template)
     })
   })
 })

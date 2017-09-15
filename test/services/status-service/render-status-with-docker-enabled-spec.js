@@ -44,22 +44,20 @@ describe("Status: render the status of a docker enabled service", function() {
     })
 
     it("should give respond with the correct template", function() {
-      const template = `
-      Status: Deployed
-      Current:
-        Tag: v1.0.0
-        CI Build: passed
-        Docker URL: some-owner/example-repo-name:v1.0.0
-      Latest:
-        Tag: v1.0.0
-        CI Build: passed
-        Docker URL: some-owner/example-repo-name:v1.0.0
-      Running:
-        Tag: v1.0.0
-        CI Build: passed
-        Docker URL: some-owner/example-repo-name:v1.0.0
-      `
-      expect(this.result).to.equal(template.trim())
+      const template = `Status: Deployed
+Current:
+  Tag: v1.0.0
+  CI Build: passed
+  Docker URL: some-owner/example-repo-name:v1.0.0
+Latest:
+  Tag: v1.0.0
+  CI Build: passed
+  Docker URL: some-owner/example-repo-name:v1.0.0
+Running:
+  Tag: v1.0.0
+  CI Build: passed
+  Docker URL: some-owner/example-repo-name:v1.0.0`
+      expect(this.result).to.equal(template)
     })
   })
 
@@ -105,22 +103,20 @@ describe("Status: render the status of a docker enabled service", function() {
     })
 
     it("should give respond with the correct template", function() {
-      const template = `
-      Status: Deploying...
-      Current:
-        Tag: v1.0.0
-        CI Build: passed
-        Docker URL: some-owner/example-repo-name:v1.0.0
-      Latest:
-        Tag: v2.0.0
-        CI Build: passed
-        Docker URL: some-owner/example-repo-name:v2.0.0
-      Running:
-        Tag: v1.0.0
-        CI Build: passed
-        Docker URL: some-owner/example-repo-name:v1.0.0
-      `
-      expect(this.result).to.equal(template.trim())
+      const template = `Status: Deploying...
+Current:
+  Tag: v1.0.0
+  CI Build: passed
+  Docker URL: some-owner/example-repo-name:v1.0.0
+Latest:
+  Tag: v2.0.0
+  CI Build: passed
+  Docker URL: some-owner/example-repo-name:v2.0.0
+Running:
+  Tag: v1.0.0
+  CI Build: passed
+  Docker URL: some-owner/example-repo-name:v1.0.0`
+      expect(this.result).to.equal(template)
     })
   })
 
@@ -145,16 +141,14 @@ describe("Status: render the status of a docker enabled service", function() {
     })
 
     it("should give respond with the correct template", function() {
-      const template = `
-      Error: Deployment not found
-      Current:
-        Error: Not found
-      Latest:
-        Error: Not found
-      Running:
-        Error: Not found
-      `
-      expect(this.result).to.equal(template.trim())
+      const template = `Error: Deployment not found
+Current:
+  Error: Not found
+Latest:
+  Error: Not found
+Running:
+  Error: Not found`
+      expect(this.result).to.equal(template)
     })
   })
 
@@ -200,22 +194,20 @@ describe("Status: render the status of a docker enabled service", function() {
     })
 
     it("should give respond with the correct template", function() {
-      const template = `
-      Status: Deploying...
-      Current:
-        Tag: v1.0.0
-        CI Build: passed
-        Docker URL: some-owner/example-repo-name:v1.0.0
-      Latest:
-        Tag: v2.0.0
-        CI Build: passed
-        Docker URL: some-owner/example-repo-name:v2.0.0
-      Running:
-        Tag: v1.0.0
-        CI Build: passed
-        Docker URL: some-owner/example-repo-name:v1.0.0
-      `
-      expect(this.result).to.equal(template.trim())
+      const template = `Status: Deploying...
+Current:
+  Tag: v1.0.0
+  CI Build: passed
+  Docker URL: some-owner/example-repo-name:v1.0.0
+Latest:
+  Tag: v2.0.0
+  CI Build: passed
+  Docker URL: some-owner/example-repo-name:v2.0.0
+Running:
+  Tag: v1.0.0
+  CI Build: passed
+  Docker URL: some-owner/example-repo-name:v1.0.0`
+      expect(this.result).to.equal(template)
     })
   })
 
@@ -259,22 +251,20 @@ describe("Status: render the status of a docker enabled service", function() {
     })
 
     it("should give respond with the correct template", function() {
-      const template = `
-      Status: Pending...
-      Current:
-        Tag: v1.0.0
-        CI Build: pending...
-        Docker URL: some-owner/example-repo-name:v1.0.0
-      Latest:
-        Tag: v2.0.0
-        CI Build: failed
-        Docker URL: pending...
-      Running:
-        Tag: v1.0.0
-        CI Build: passed
-        Docker URL: some-owner/example-repo-name:v1.0.0
-      `
-      expect(this.result).to.equal(template.trim())
+      const template = `Status: Pending...
+Current:
+  Tag: v1.0.0
+  CI Build: pending...
+  Docker URL: some-owner/example-repo-name:v1.0.0
+Latest:
+  Tag: v2.0.0
+  CI Build: failed
+  Docker URL: pending...
+Running:
+  Tag: v1.0.0
+  CI Build: passed
+  Docker URL: some-owner/example-repo-name:v1.0.0`
+      expect(this.result).to.equal(template)
     })
   })
 })
