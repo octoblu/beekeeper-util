@@ -60,7 +60,7 @@ describe("Status: get the status of a service", function() {
 
     it("should give respond with the correct result", function() {
       expect(this.result).to.deep.equal({
-        desired: {
+        current: {
           ci_passing: true,
           docker_url: "some-owner/example-repo-name:v1.0.0",
           owner_name: "some-owner",
@@ -124,7 +124,7 @@ describe("Status: get the status of a service", function() {
 
     it("should give respond with the correct result", function() {
       expect(this.result).to.deep.equal({
-        desired: {
+        current: {
           ci_passing: true,
           docker_url: "some-owner/example-repo-name:v1.0.0",
           owner_name: "some-owner",

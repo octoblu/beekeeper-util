@@ -123,12 +123,12 @@ class StatusService
 
     unless latest?
       console.log colorTitle('There is no latest version, maybe it has never been deployed?')
-      console.log colorTitle('Desired'), colorValue(deploymentSlug)
+      console.log colorTitle('Current'), colorValue(deploymentSlug)
     else if semver.eq(deployment.tag, latest.tag)
       console.log colorTitle('Running'), colorValue(deploymentSlug)
     else
       console.log colorTitle('Running'), colorValue(latestSlug)
-      console.log colorTitle('Desired'), colorValue(deploymentSlug)
+      console.log colorTitle('Current'), colorValue(deploymentSlug)
 
     unless _.isEmpty deployment.tags
       console.log colorTitle('Tag    '), colorList(deployment.tags)

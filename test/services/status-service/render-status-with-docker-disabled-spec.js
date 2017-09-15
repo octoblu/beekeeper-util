@@ -1,14 +1,14 @@
 const { beforeEach, describe, expect, it } = global
 const StatusService = require("../../../lib/services/status-service")
 
-describe("Status: render the status of a docker enabled service", function() {
+describe("Status: render the status of a docker disabled service", function() {
   describe(`when the status is deployed`, function() {
     beforeEach("create service", function() {
       this.sut = new StatusService({
         beekeeperUri: "https://beekeeper.octoblu.com",
         beekeeperEnabled: true,
         projectUri: "https://some-repo.example.com",
-        dockerEnabled: true,
+        dockerEnabled: false,
         disableColors: true,
       })
     })
@@ -49,15 +49,12 @@ describe("Status: render the status of a docker enabled service", function() {
       Current:
         Tag: v1.0.0
         CI Build: passed
-        Docker URL: some-owner/example-repo-name:v1.0.0
       Latest:
         Tag: v1.0.0
         CI Build: passed
-        Docker URL: some-owner/example-repo-name:v1.0.0
       Running:
         Tag: v1.0.0
         CI Build: passed
-        Docker URL: some-owner/example-repo-name:v1.0.0
       `
       expect(this.result).to.equal(template.trim())
     })
@@ -69,7 +66,7 @@ describe("Status: render the status of a docker enabled service", function() {
         beekeeperUri: "https://beekeeper.octoblu.com",
         beekeeperEnabled: true,
         projectUri: "https://some-repo.example.com",
-        dockerEnabled: true,
+        dockerEnabled: false,
         disableColors: true,
       })
     })
@@ -110,15 +107,12 @@ describe("Status: render the status of a docker enabled service", function() {
       Current:
         Tag: v1.0.0
         CI Build: passed
-        Docker URL: some-owner/example-repo-name:v1.0.0
       Latest:
         Tag: v2.0.0
         CI Build: passed
-        Docker URL: some-owner/example-repo-name:v2.0.0
       Running:
         Tag: v1.0.0
         CI Build: passed
-        Docker URL: some-owner/example-repo-name:v1.0.0
       `
       expect(this.result).to.equal(template.trim())
     })
@@ -131,7 +125,7 @@ describe("Status: render the status of a docker enabled service", function() {
         beekeeperEnabled: true,
         projectUri: "https://some-repo.example.com",
         disableColors: true,
-        dockerEnabled: true,
+        dockerEnabled: false,
       })
     })
 
@@ -164,7 +158,7 @@ describe("Status: render the status of a docker enabled service", function() {
         beekeeperUri: "https://beekeeper.octoblu.com",
         beekeeperEnabled: true,
         projectUri: "https://some-repo.example.com",
-        dockerEnabled: true,
+        dockerEnabled: false,
         disableColors: true,
       })
     })
@@ -205,15 +199,12 @@ describe("Status: render the status of a docker enabled service", function() {
       Current:
         Tag: v1.0.0
         CI Build: passed
-        Docker URL: some-owner/example-repo-name:v1.0.0
       Latest:
         Tag: v2.0.0
         CI Build: passed
-        Docker URL: some-owner/example-repo-name:v2.0.0
       Running:
         Tag: v1.0.0
         CI Build: passed
-        Docker URL: some-owner/example-repo-name:v1.0.0
       `
       expect(this.result).to.equal(template.trim())
     })
@@ -225,7 +216,7 @@ describe("Status: render the status of a docker enabled service", function() {
         beekeeperUri: "https://beekeeper.octoblu.com",
         beekeeperEnabled: true,
         projectUri: "https://some-repo.example.com",
-        dockerEnabled: true,
+        dockerEnabled: false,
         disableColors: true,
       })
     })
@@ -264,15 +255,12 @@ describe("Status: render the status of a docker enabled service", function() {
       Current:
         Tag: v1.0.0
         CI Build: pending...
-        Docker URL: some-owner/example-repo-name:v1.0.0
       Latest:
         Tag: v2.0.0
         CI Build: failed
-        Docker URL: pending...
       Running:
         Tag: v1.0.0
         CI Build: passed
-        Docker URL: some-owner/example-repo-name:v1.0.0
       `
       expect(this.result).to.equal(template.trim())
     })
