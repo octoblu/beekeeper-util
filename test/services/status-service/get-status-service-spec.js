@@ -10,6 +10,7 @@ describe("Status: get the status of a service", function() {
         beekeeperUri: "https://beekeeper.octoblu.com",
         beekeeperEnabled: true,
         projectUri: "https://some-repo.example.com",
+        dockerEnabled: true,
       })
     })
 
@@ -92,6 +93,7 @@ describe("Status: get the status of a service", function() {
       this.sut = new StatusService({
         beekeeperUri: "https://beekeeper.octoblu.com",
         beekeeperEnabled: true,
+        dockerEnabled: true,
       })
     })
 
@@ -138,7 +140,7 @@ describe("Status: get the status of a service", function() {
           tag: "latest",
           tags: [],
         },
-        running: {},
+        running: null,
       })
     })
   })
