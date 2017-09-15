@@ -2,9 +2,7 @@
   "name": "beekeeper-util",
   "version": "11.2.0",
   "description": "CLI utility for managing the beekeeper-service",
-  "keywords": [
-    "beekeeper"
-  ],
+  "keywords": ["beekeeper"],
   "homepage": "https://github.com/octoblu/beekeeper-util",
   "bugs": "https://github.com/octoblu/beekeeper-util/issues",
   "author": {
@@ -16,7 +14,6 @@
     "beekeeper-delete": "./command-delete.js",
     "beekeeper-get": "./command-get.js",
     "beekeeper-release": "./command-release.js",
-    "beekeeper-status-notify": "./command-status-notify.js",
     "beekeeper-status": "./command-status.js",
     "beekeeper-tag": "./command-tag.js",
     "beekeeper-update": "./command-update.js",
@@ -26,7 +23,6 @@
     "bkr": "./command-release.js",
     "bkrelease": "./command-release.js",
     "bktag": "./command-tag.js",
-    "bsn": "./command-status-notify.js",
     "bs": "./command-status.js"
   },
   "repository": {
@@ -44,10 +40,10 @@
     "@octoblu/docker-hub-api": "^1.0.2",
     "async": "^2.4.1",
     "chalk": "^2.1.0",
-    "cli-clear": "^1.0.4",
     "coffee-script": "^1.12.6",
     "colors": "^1.1.2",
     "commander": "^2.10.0",
+    "console-clear": "^1.0.0",
     "dashdash": "^1.14.1",
     "debug": "^2.6.8",
     "dotenv": "^4.0.0",
@@ -93,13 +89,7 @@
   "license": "MIT",
   "nyc": {
     "cache": true,
-    "reporter": [
-      "text-summary",
-      "lcov",
-      "json"
-    ],
-    "extension": [
-      ".coffee"
-    ]
+    "reporter": ["text-summary", "lcov", "json"],
+    "extension": [".coffee"]
   }
 }

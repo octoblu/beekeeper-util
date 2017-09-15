@@ -6,6 +6,7 @@ const StatusService = require("./lib/services/status-service")
 const ProjectHelper = require("./lib/helpers/project-helper")
 const Spinner = require("./lib/models/spinner")
 const parseBeekeeperEnv = require("./lib/helpers/parse-beekeeper-env")
+const clear = require("console-clear")
 const path = require("path")
 
 const projectRoot = process.cwd()
@@ -73,6 +74,28 @@ const CLI_OPTIONS = [
     default: false,
     help: "Disable colors in output",
   },
+  {
+    names: ["notify", "n"],
+    type: "boolarg",
+    env: "BEEKEEPER_NOTIFY",
+    default: true,
+    help: "Send system notification on state change",
+  },
+  {
+    names: ["watch", "w"],
+    type: "bool",
+    env: "BEEKEEPER_STATUS_WATCH",
+    default: false,
+    help: "Watch the status and refresh",
+  },
+  {
+    names: ["watch-interval"],
+    type: "number",
+    env: "BEEKEEPER_STATUS_WATCH_INTERVAL",
+    default: 15,
+    help: "Refresh interval",
+    helpArg: "SECONDS",
+  },
 ]
 
 const run = async function() {
@@ -96,6 +119,9 @@ const run = async function() {
     dockerEnabled,
     disableColors,
     projectUri,
+    notify,
+    watch,
+    watchInterval,
   } = options
 
   const spinner = new Spinner()
@@ -105,18 +131,52 @@ const run = async function() {
     beekeeperEnabled,
     disableColors,
     dockerEnabled,
-    projectUri,
     spinner,
   })
-
-  try {
-    const status = await statusService.get({ projectOwner, projectName, projectVersion })
-    console.log(`${statusService.render(status)}`)
-  } catch (error) {
-    octoDash.die(error)
+  if (watch) {
+    const refresh = async () => {
+      let status
+      clear(true)
+      console.log("Refreshing....")
+      try {
+        status = await statusService.get({ projectOwner, projectName, projectVersion, projectUri })
+        clear(true)
+        console.log(`${statusService.render(status)}`)
+      } catch (error) {
+        octoDash.die(error)
+      }
+      const { current, changed } = status
+      if (notify && changed) {
+        statusService.notify({ current, projectName, projectVersion, projectUri })
+      }
+      if (statusService.isDeployed({ current })) {
+        octoDash.die()
+      }
+      const statusError = statusService.getStatusError({ current })
+      if (statusError) {
+        octoDash.die(statusError)
+      }
+    }
+    await refresh()
+    const refreshInterval = setInterval(refresh, watchInterval * 1000)
+    process.on("SIGINT", () => {
+      console.log("exiting...")
+      clearInterval(refreshInterval)
+    })
+  } else {
+    let status
+    try {
+      status = await statusService.get({ projectOwner, projectName, projectVersion, projectUri })
+      console.log(`${statusService.render(status)}`)
+    } catch (error) {
+      octoDash.die(error)
+    }
+    const { current } = status
+    if (notify) {
+      statusService.notify({ current, projectName, projectVersion, projectUri })
+    }
+    octoDash.die()
   }
-
-  octoDash.die() // exits with status 0
 }
 
 run().catch(function(error) {
