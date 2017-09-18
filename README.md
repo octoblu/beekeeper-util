@@ -16,6 +16,12 @@ The utility for the [beekeeper-service](https://github.com/octoblu/beekeeper-ser
 npm install --global beekeeper-util
 ```
 
+or
+
+```bash
+yarn global add beekeeper-util
+```
+
 ## Setting Defaults
 
 By default all services are enabled on configure/release. If you would like to prevent certain integrations from being automatically set up, you can disable them by creating a `.beekeeper.env` file in the root of your project. The env file is parsed and will be applied as if they were set in your environment. *DO NOT* place secrets or other confidential information in this file.
@@ -54,21 +60,29 @@ There are two types of variables, static values (using the `value` key in your j
 
 Configure your project.
 
-`BEEKEEPER_ENABLED`: Set up beekeeper docker automatic deployments, requires a `Dockerfile` in project root.
-`BEEKEEPER_CODEFRESH_ENABLED`: Set up codefresh for automatic docker builds, requires a `Dockerfile` in project root.
-`BEEKEEPER_CODECOV_ENABLED`: Set up Codecov, will only work for private repos.
-`BEEKEEPER_TRAVIS_ENABLED`: Set up travis-ci, will automatically detect if your github repo is private and access the proper travis-ci environment.
-
-```bash
-beekeeper-configure
-```
-
 ### beekeeper-release (alias `bkr`)
 
-Tag a release and (optionally) trigger an automatic deployment using semver to create a proper version number and tag. Uses --patch by default.
+Create a release and (optionally) trigger an automatic deployment using semver to create a proper version number and tag. Uses `--patch` by default.
 
-`BEEKEEPER_ENABLED`: Create a deployment in beekeeper, used to update docker swarm automatically.
-`BEEKEEPER_GITHUB_RELEASE_ENABLED`: Create a release in github.
+### beekeeper-tag (alias `bkt`)
+
+Mark a deployment with a "tag"
+
+### beekeeper-status (alias `bks`)
+
+Get status of the a deployment
+
+### beekeeper-webhook (no alias)
+
+Mark a deployment with CI passing or build passsing
+
+### beekeeper-update (no alias)
+
+Update a deployment with a docker url
+
+### beekeeper-delete (no alias)
+
+Delete a deployment
 
 ## License
 

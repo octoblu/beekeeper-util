@@ -1,8 +1,0 @@
-{
-  "beekeeper": {
-    "enabled": false
-  },
-  "quay": {
-    "enabled": false
-  }
-}
