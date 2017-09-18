@@ -1,0 +1,15 @@
+module.exports = {
+  TravisService: require("./lib/services/travis-service"),
+  StatusService: require("./lib/services/status-service"),
+  ReleaseService: require("./lib/services/release-service"),
+  GithubService: require("./lib/services/github-service"),
+  GitService: require("./lib/services/git-service"),
+  DockerHubService: require("./lib/services/docker-hub-service"),
+  ConfigureService: require("./lib/services/configure-service"),
+  CodefreshService: require("./lib/services/codefresh-service"),
+  CodecovService: require("./lib/services/codecov-service"),
+  BeekeeperService: require("./lib/services/beekeeper-service"),
+  parseBeekeeperEnv: require("./lib/helpers/parse-beekeeper-env"),
+  ProjectHelper: require("./lib/helpers/project-helper"),
+  SemverHelper: require("./lib/helpers/semver-helper"),
+}

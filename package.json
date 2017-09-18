@@ -1,6 +1,6 @@
 {
   "name": "beekeeper-util",
-  "version": "12.0.0",
+  "version": "12.1.0",
   "description": "CLI utility for managing the beekeeper-service",
   "keywords": [
     "beekeeper"
@@ -11,6 +11,7 @@
     "name": "Octoblu",
     "url": "https://github.com/octoblu"
   },
+  "main": "index.js",
   "bin": {
     "beekeeper-configure": "./command-configure.js",
     "beekeeper-delete": "./command-delete.js",
