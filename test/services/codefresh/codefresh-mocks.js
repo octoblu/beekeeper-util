@@ -37,12 +37,7 @@ class CodefreshMocks {
       .post("/services/some-owner/example-repo-name", {
         services: [
           {
-            deploy_sh: "beekeeper webhook --type codefresh",
-            deployment: {
-              deploy_image: "octoblu/beekeeper-util:latest",
-              deploy_type: "image-based",
-              deploymentYamlFrom: "kubeService",
-            },
+            deploy_sh: "",
             integ_sh: "",
             test_sh: "",
             env: [

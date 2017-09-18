@@ -25,7 +25,6 @@ describe("DockerHub: Configure an existing project", function() {
           dockerHubEnabled: true,
           dockerHubUsername: "some-docker-hub-username",
           dockerHubPassword: "some-docker-hub-password",
-          beekeeperEnabled: true,
           beekeeperUri: "https://bk-user:bk-password@beekeeper.example.com",
           mockDockerHubApi: this.mockDockerHubApi,
         })
@@ -60,7 +59,10 @@ describe("DockerHub: Configure an existing project", function() {
       })
 
       it("should call of the docker hub endpoints", function() {
-        expect(this.mockDockerHubApi.login).to.have.been.calledWith("some-docker-hub-username", "some-docker-hub-password")
+        expect(this.mockDockerHubApi.login).to.have.been.calledWith(
+          "some-docker-hub-username",
+          "some-docker-hub-password",
+        )
         expect(this.mockDockerHubApi.repository).to.have.been.calledWith("some-owner", "example-repo-name")
         expect(this.mockDockerHubApi.createRepository).to.have.been.calledWith("some-owner", "example-repo-name", {
           active: true,
@@ -69,8 +71,16 @@ describe("DockerHub: Configure an existing project", function() {
           provider: "github",
           vcs_repo_name: "some-owner/example-repo-name",
         })
-        expect(this.mockDockerHubApi.createWebhook).to.have.been.calledWith("some-owner", "example-repo-name", "Beekeeper v2")
-        expect(this.mockDockerHubApi.deleteBuildTag).to.have.been.calledWith("some-owner", "example-repo-name", "some-build-tag-id")
+        expect(this.mockDockerHubApi.createWebhook).to.have.been.calledWith(
+          "some-owner",
+          "example-repo-name",
+          "Beekeeper v2",
+        )
+        expect(this.mockDockerHubApi.deleteBuildTag).to.have.been.calledWith(
+          "some-owner",
+          "example-repo-name",
+          "some-build-tag-id",
+        )
       })
     })
   })
